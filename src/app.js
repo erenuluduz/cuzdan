@@ -51,115 +51,14 @@ function initApp() {
   state.categories = loadCategories();
   state.activeMonth = loadActiveMonth(getMonthKey(new Date()));
 
-  // Eğer ilk açılış ve hiç işlem yoksa, örnek başlangıç verisi ekle
-  if (state.transactions.length === 0) {
-    seedInitialDemoData();
+  // Test veya demo tohum verileri varsa tamamen temizle
+  if (state.transactions.some(t => String(t.id).startsWith('seed-'))) {
+    state.transactions = state.transactions.filter(t => !String(t.id).startsWith('seed-'));
+    saveTransactions(state.transactions);
   }
 
   renderApp();
   setupGlobalEvents();
-}
-
-/**
- * İlk kez açan kullanıcının arayüzü hemen dolu ve canlı görebilmesi için örnek veriler
- */
-function seedInitialDemoData() {
-  const currentKey = state.activeMonth;
-  const today = new Date().toISOString().split('T')[0];
-
-  const initialDemo = [
-    {
-      id: 'seed-1',
-      type: 'income',
-      category: 'Maaş',
-      subcategory: 'Aylık Maaş',
-      amount: 45000,
-      date: `${currentKey}-01`,
-      monthKey: currentKey,
-      description: 'Aylık Net Maaş',
-      createdAt: Date.now() - 50000
-    },
-    {
-      id: 'seed-2',
-      type: 'income',
-      category: 'Mesai',
-      subcategory: 'Hafta Sonu Mesai',
-      amount: 4500,
-      date: `${currentKey}-05`,
-      monthKey: currentKey,
-      description: 'Proje teslim mesaisi',
-      createdAt: Date.now() - 40000
-    },
-    {
-      id: 'seed-3',
-      type: 'expense',
-      category: 'Yatırım',
-      subcategory: 'Borsa / Hisse Senedi',
-      amount: 8000,
-      date: `${currentKey}-02`,
-      monthKey: currentKey,
-      description: 'Aylık hisse yatırımı',
-      createdAt: Date.now() - 30000
-    },
-    {
-      id: 'seed-4',
-      type: 'expense',
-      category: 'Faturalar',
-      subcategory: 'Elektrik Faturası',
-      amount: 850,
-      date: `${currentKey}-03`,
-      monthKey: currentKey,
-      description: 'Elektrik faturası',
-      createdAt: Date.now() - 25000
-    },
-    {
-      id: 'seed-5',
-      type: 'expense',
-      category: 'Faturalar',
-      subcategory: 'Doğalgaz Faturası',
-      amount: 600,
-      date: `${currentKey}-04`,
-      monthKey: currentKey,
-      description: 'Doğalgaz faturası',
-      createdAt: Date.now() - 20000
-    },
-    {
-      id: 'seed-6',
-      type: 'expense',
-      category: 'Market',
-      subcategory: 'Mecburi Market (Temel Gıda / Temizlik)',
-      amount: 5200,
-      date: `${currentKey}-06`,
-      monthKey: currentKey,
-      description: 'Haftalık temel gıda alışverişi',
-      createdAt: Date.now() - 15000
-    },
-    {
-      id: 'seed-7',
-      type: 'expense',
-      category: 'Market',
-      subcategory: 'Keyfi Market (Atıştırmalık / Özel)',
-      amount: 950,
-      date: `${currentKey}-08`,
-      monthKey: currentKey,
-      description: 'Kahve ve atıştırmalıklar',
-      createdAt: Date.now() - 10000
-    },
-    {
-      id: 'seed-8',
-      type: 'expense',
-      category: 'Kredi Kartı',
-      subcategory: 'Ekstre Ödemesi',
-      amount: 6500,
-      date: `${currentKey}-10`,
-      monthKey: currentKey,
-      description: 'Kart dönem borcu',
-      createdAt: Date.now() - 5000
-    }
-  ];
-
-  state.transactions = initialDemo;
-  saveTransactions(state.transactions);
 }
 
 /**
@@ -340,6 +239,14 @@ function attachAppListeners() {
   });
   document.getElementById('btn-import-backup')?.addEventListener('click', () => {
     document.getElementById('backup-file-input')?.click();
+  });
+  document.getElementById('btn-clear-all')?.addEventListener('click', () => {
+    if (confirm('Tüm gelir ve gider kayıtlarını sıfırlamak istediğinize emin misiniz? Bu işlem geri alınamaz.')) {
+      state.transactions = [];
+      saveTransactions([]);
+      state.drillDownCategory = null;
+      renderApp();
+    }
   });
 
   // Hızlı Ekleme Butonları (Boş tablodaki butonlar)

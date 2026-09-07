@@ -85,6 +85,11 @@ export function renderHeader(props) {
             <span>Kategoriler</span>
           </button>
 
+          <button id="btn-clear-all" title="Tüm İşlem Kayıtlarını Sıfırla" class="px-2.5 py-2 rounded-xl text-xs font-medium bg-slate-800 hover:bg-rose-900/30 text-slate-400 hover:text-rose-300 border border-slate-700/60 transition flex items-center gap-1.5">
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+            <span>Sıfırla</span>
+          </button>
+
           <!-- Gelir Ekle -->
           <button id="btn-add-income" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition flex items-center gap-1.5">
             <i data-lucide="plus-circle" class="w-4 h-4"></i>
