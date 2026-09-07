@@ -38,7 +38,8 @@ const state = {
   modal: {
     isOpen: false,
     type: 'expense', // 'income' | 'expense'
-    editingTransaction: null
+    editingTransaction: null,
+    preselectedCategory: null
   },
   isCategoryModalOpen: false
 };
@@ -163,7 +164,8 @@ function renderModals() {
       type: state.modal.type,
       categories: state.categories,
       activeMonth: state.activeMonth,
-      editingTransaction: state.modal.editingTransaction
+      editingTransaction: state.modal.editingTransaction,
+      preselectedCategory: state.modal.preselectedCategory
     });
     attachTransactionModalListeners();
   } else if (state.isCategoryModalOpen) {
@@ -249,7 +251,11 @@ function attachAppListeners() {
     }
   });
 
-  // Hızlı Ekleme Butonları (Boş tablodaki butonlar)
+  // Hızlı Ekleme Butonları
+  document.getElementById('btn-add-salary-quick')?.addEventListener('click', () => openTransactionModal('income', 'Maaş'));
+  document.getElementById('btn-add-overtime-quick')?.addEventListener('click', () => openTransactionModal('income', 'Mesai'));
+  document.getElementById('btn-add-other-income-quick')?.addEventListener('click', () => openTransactionModal('income', 'Diğer Gelir'));
+
   document.querySelectorAll('.btn-quick-add-income').forEach(b => {
     b.addEventListener('click', () => openTransactionModal('income'));
   });
@@ -330,11 +336,12 @@ function changeMonth(delta) {
 /**
  * İşlem Modalı Aç
  */
-function openTransactionModal(type = 'expense') {
+function openTransactionModal(type = 'expense', preselectedCategory = null) {
   state.modal = {
     isOpen: true,
     type,
-    editingTransaction: null
+    editingTransaction: null,
+    preselectedCategory
   };
   renderModals();
 }

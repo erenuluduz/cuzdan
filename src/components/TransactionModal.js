@@ -15,11 +15,11 @@ import { getMonthKey } from '../utils/calculations.js';
  * @returns {string}
  */
 export function renderTransactionModal(props) {
-  const { type = 'expense', categories = [], activeMonth, editingTransaction = null } = props;
+  const { type = 'expense', categories = [], activeMonth, editingTransaction = null, preselectedCategory = null } = props;
   const isEditing = Boolean(editingTransaction);
 
   const availableCategories = categories.filter(c => c.type === type);
-  const defaultCategory = editingTransaction?.category || (availableCategories[0]?.name || '');
+  const defaultCategory = editingTransaction?.category || preselectedCategory || (availableCategories[0]?.name || '');
   const selectedCatObj = availableCategories.find(c => c.name === defaultCategory) || availableCategories[0];
   const subcategories = selectedCatObj?.subcategories || [];
   const defaultSubcategory = editingTransaction?.subcategory || (subcategories[0] || '');
