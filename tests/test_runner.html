@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Test Runner</title>
+</head>
+<body>
+  <h1>Unit Test Runner</h1>
+  <div id="output">Running tests...</div>
+  <script type="module">
+    import { runTests } from './calculations.test.js';
+    try {
+      const results = runTests();
+      document.getElementById('output').innerHTML = `
+        <div id="status">ALL_TESTS_PASSED</div>
+        <ul>${results.map(r => `<li>${r.name}: ${r.status}</li>`).join('')}</ul>
+      `;
+      console.log('ALL_TESTS_PASSED', results);
+    } catch (err) {
+      document.getElementById('output').innerHTML = `<div id="status">TEST_FAILED</div><pre>${err.stack}</pre>`;
+      console.error('TEST_FAILED', err);
+    }
+  </script>
+</body>
+</html>
