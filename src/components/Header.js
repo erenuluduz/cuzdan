@@ -85,6 +85,11 @@ export function renderHeader(props) {
             <span>Kategoriler</span>
           </button>
 
+          <button id="btn-open-settings" title="Finansal Ayarlar (Kart Borcu & Sabit Maaş)" class="px-3 py-2 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-purple-300 hover:text-white border border-purple-500/30 transition flex items-center gap-1.5">
+            <i data-lucide="settings" class="w-3.5 h-3.5 text-purple-400"></i>
+            <span>Ayarlar</span>
+          </button>
+
           <button id="btn-clear-all" title="Tüm İşlem Kayıtlarını Sıfırla" class="px-2.5 py-2 rounded-xl text-xs font-medium bg-slate-800 hover:bg-rose-900/30 text-slate-400 hover:text-rose-300 border border-slate-700/60 transition flex items-center gap-1.5">
             <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
             <span>Sıfırla</span>

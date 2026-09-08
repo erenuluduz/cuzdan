@@ -8,6 +8,9 @@ import {
   calculateCumulativeNetWorth,
   calculateCategoryBreakdown,
   calculateSubcategoryBreakdown,
+  calculateCreditCardDebt,
+  calculateCashBalance,
+  calculateRealNetWorth,
   getMonthKey,
   formatMonthName
 } from './utils/calculations.js';
@@ -16,6 +19,9 @@ import {
   saveTransactions,
   loadCategories,
   saveCategories,
+  loadUserSettings,
+  saveUserSettings,
+  DEFAULT_USER_SETTINGS,
   loadActiveMonth,
   saveActiveMonth,
   exportBackupJSON,
@@ -28,11 +34,14 @@ import { renderExpenseChartHTML, initExpenseChart } from './components/ExpenseCh
 import { renderTransactionTables } from './components/TransactionTables.js';
 import { renderTransactionModal } from './components/TransactionModal.js';
 import { renderCategoryModal } from './components/CategoryModal.js';
+import { renderSettingsModal } from './components/SettingsModal.js';
+import { renderCCPaymentModal } from './components/CCPaymentModal.js';
 
 // Uygulama Durumu (State)
 const state = {
   transactions: [],
   categories: [],
+  settings: { ...DEFAULT_USER_SETTINGS },
   activeMonth: getMonthKey(new Date()),
   drillDownCategory: null,
   modal: {
@@ -41,7 +50,9 @@ const state = {
     editingTransaction: null,
     preselectedCategory: null
   },
-  isCategoryModalOpen: false
+  isCategoryModalOpen: false,
+  isSettingsModalOpen: false,
+  isCCPaymentModalOpen: false
 };
 
 /**
@@ -50,6 +61,7 @@ const state = {
 function initApp() {
   state.transactions = loadTransactions();
   state.categories = loadCategories();
+  state.settings = loadUserSettings();
   state.activeMonth = loadActiveMonth(getMonthKey(new Date()));
 
   // Test veya demo tohum verileri varsa tamamen temizle
@@ -58,8 +70,42 @@ function initApp() {
     saveTransactions(state.transactions);
   }
 
+  // Aktif ay için sabit maaş kuralını kontrol et
+  ensureFixedSalaryForMonth(state.activeMonth);
+
   renderApp();
   setupGlobalEvents();
+}
+
+/**
+ * Eğer kullanıcı sabit maaş tanımlamışsa ve ilgili ayda henüz maaş yoksa otomatik ekler.
+ * @param {string} monthKey 'YYYY-MM'
+ */
+function ensureFixedSalaryForMonth(monthKey) {
+  if (!state.settings || !state.settings.fixedSalaryAmount || state.settings.fixedSalaryAmount <= 0) {
+    return;
+  }
+
+  const hasSalary = state.transactions.some(
+    t => t.type === 'income' && t.category === 'Maaş' && t.monthKey === monthKey
+  );
+
+  if (!hasSalary) {
+    const day = String(state.settings.salaryDayOfMonth || 1).padStart(2, '0');
+    const autoSalary = {
+      id: 'fixed_sal_' + monthKey,
+      type: 'income',
+      category: 'Maaş',
+      subcategory: 'Aylık Maaş',
+      amount: Number(state.settings.fixedSalaryAmount),
+      date: `${monthKey}-${day}`,
+      monthKey: monthKey,
+      description: 'Otomatik Sabit Maaş',
+      createdAt: Date.now()
+    };
+    state.transactions.unshift(autoSalary);
+    saveTransactions(state.transactions);
+  }
 }
 
 /**
@@ -71,7 +117,8 @@ function renderApp() {
 
   const activeMonthName = formatMonthName(state.activeMonth);
   const monthlyTotals = calculateMonthlyTotals(state.transactions, state.activeMonth);
-  const cumulativeNetWorth = calculateCumulativeNetWorth(state.transactions);
+  const creditCardDebt = calculateCreditCardDebt(state.transactions, state.settings.initialCreditCardDebt);
+  const cumulativeNetWorth = calculateCumulativeNetWorth(state.transactions, state.settings.initialCreditCardDebt);
 
   const categoriesBreakdown = calculateCategoryBreakdown(
     state.transactions,
@@ -96,10 +143,11 @@ function renderApp() {
     ${renderHeader({ activeMonth: state.activeMonth })}
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1 w-full">
-      <!-- 1. KPI Kartları -->
+      <!-- 1. KPI Kartları (5 Kolon) -->
       ${renderKPICards({
         monthlyTotals,
         cumulativeNetWorth,
+        creditCardDebt,
         activeMonthName
       })}
 
@@ -173,6 +221,18 @@ function renderModals() {
       categories: state.categories
     });
     attachCategoryModalListeners();
+  } else if (state.isSettingsModalOpen) {
+    modalRoot.innerHTML = renderSettingsModal({
+      settings: state.settings
+    });
+    attachSettingsModalListeners();
+  } else if (state.isCCPaymentModalOpen) {
+    const currentDebt = calculateCreditCardDebt(state.transactions, state.settings.initialCreditCardDebt);
+    modalRoot.innerHTML = renderCCPaymentModal({
+      currentDebt,
+      activeMonth: state.activeMonth
+    });
+    attachCCPaymentModalListeners();
   } else {
     modalRoot.innerHTML = '';
   }
@@ -200,6 +260,10 @@ function setupGlobalEvents() {
           if (confirm(`Yedek dosyasında ${result.transactions.length} işlem bulundu. Mevcut kayıtların üzerine yazılsın mı?`)) {
             state.transactions = result.transactions;
             state.categories = result.categories;
+            if (result.settings) {
+              state.settings = result.settings;
+              saveUserSettings(state.settings);
+            }
             saveTransactions(state.transactions);
             saveCategories(state.categories);
             renderApp();
@@ -226,6 +290,7 @@ function attachAppListeners() {
     state.activeMonth = getMonthKey(new Date());
     state.drillDownCategory = null;
     saveActiveMonth(state.activeMonth);
+    ensureFixedSalaryForMonth(state.activeMonth);
     renderApp();
   });
 
@@ -236,8 +301,16 @@ function attachAppListeners() {
     state.isCategoryModalOpen = true;
     renderModals();
   });
+  document.getElementById('btn-open-settings')?.addEventListener('click', () => {
+    state.isSettingsModalOpen = true;
+    renderModals();
+  });
+  document.getElementById('btn-kpi-pay-cc')?.addEventListener('click', () => {
+    state.isCCPaymentModalOpen = true;
+    renderModals();
+  });
   document.getElementById('btn-export-backup')?.addEventListener('click', () => {
-    exportBackupJSON(state.transactions, state.categories);
+    exportBackupJSON(state.transactions, state.categories, state.settings);
   });
   document.getElementById('btn-import-backup')?.addEventListener('click', () => {
     document.getElementById('backup-file-input')?.click();
@@ -290,7 +363,8 @@ function attachAppListeners() {
         state.modal = {
           isOpen: true,
           type: item.type,
-          editingTransaction: item
+          editingTransaction: item,
+          preselectedCategory: item.category
         };
         renderModals();
       }
@@ -328,8 +402,9 @@ function changeMonth(delta) {
   }
 
   state.activeMonth = `${year}-${String(month).padStart(2, '0')}`;
-  state.drillDownCategory = null; // Ay değiştiğinde kategori filtresini sıfırla
+  state.drillDownCategory = null;
   saveActiveMonth(state.activeMonth);
+  ensureFixedSalaryForMonth(state.activeMonth);
   renderApp();
 }
 
@@ -360,7 +435,7 @@ function attachTransactionModalListeners() {
   const expenseTabBtn = document.getElementById('tab-expense-btn');
 
   const closeModal = () => {
-    state.modal = { isOpen: false, type: 'expense', editingTransaction: null };
+    state.modal = { isOpen: false, type: 'expense', editingTransaction: null, preselectedCategory: null };
     renderModals();
   };
 
@@ -402,6 +477,12 @@ function attachTransactionModalListeners() {
     const description = document.getElementById('trans-description').value.trim();
     const monthKey = getMonthKey(date);
 
+    // Giderler için ödeme yöntemi
+    let paymentMethod = undefined;
+    if (transType === 'expense') {
+      paymentMethod = document.querySelector('input[name="payment-method-radio"]:checked')?.value || 'credit_card';
+    }
+
     if (isNaN(amount) || amount <= 0) {
       alert('Lütfen geçerli bir pozitif tutar girin.');
       return;
@@ -420,6 +501,7 @@ function attachTransactionModalListeners() {
           return {
             ...t,
             type: transType,
+            paymentMethod,
             category,
             subcategory,
             amount,
@@ -435,6 +517,7 @@ function attachTransactionModalListeners() {
       const newTransaction = {
         id: 'tx_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
         type: transType,
+        paymentMethod,
         category,
         subcategory,
         amount,
@@ -446,7 +529,6 @@ function attachTransactionModalListeners() {
       state.transactions.unshift(newTransaction);
     }
 
-    // Aktif ayı eklenen işlemin ayına güncelle ki kullanıcı hemen görsün
     state.activeMonth = monthKey;
     saveTransactions(state.transactions);
     saveActiveMonth(state.activeMonth);
@@ -469,7 +551,7 @@ function attachCategoryModalListeners() {
   const closeCategoryModal = () => {
     state.isCategoryModalOpen = false;
     renderModals();
-    renderApp(); // Güncellenen kategorilerle ana ekranı yenile
+    renderApp();
   };
 
   closeBtn?.addEventListener('click', closeCategoryModal);
@@ -478,7 +560,6 @@ function attachCategoryModalListeners() {
     if (e.target === overlay) closeCategoryModal();
   });
 
-  // Yeni Ana Kategori Ekle
   addCatForm?.addEventListener('submit', (e) => {
     e.preventDefault();
     const name = document.getElementById('new-cat-name').value.trim();
@@ -505,7 +586,6 @@ function attachCategoryModalListeners() {
     renderModals();
   });
 
-  // Yeni Alt Kategori Ekle
   addSubcatForm?.addEventListener('submit', (e) => {
     e.preventDefault();
     const parentName = document.getElementById('subcat-parent-name').value;
@@ -525,6 +605,96 @@ function attachCategoryModalListeners() {
 
     saveCategories(state.categories);
     renderModals();
+  });
+}
+
+/**
+ * Finansal Ayarlar Modalı Dinleyicileri
+ */
+function attachSettingsModalListeners() {
+  const closeBtn = document.getElementById('settings-modal-close');
+  const cancelBtn = document.getElementById('settings-cancel-btn');
+  const overlay = document.getElementById('settings-modal-overlay');
+  const form = document.getElementById('settings-form');
+
+  const closeSettingsModal = () => {
+    state.isSettingsModalOpen = false;
+    renderModals();
+  };
+
+  closeBtn?.addEventListener('click', closeSettingsModal);
+  cancelBtn?.addEventListener('click', closeSettingsModal);
+  overlay?.addEventListener('click', (e) => {
+    if (e.target === overlay) closeSettingsModal();
+  });
+
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const initialCreditCardDebt = parseFloat(document.getElementById('setting-cc-debt').value) || 0;
+    const fixedSalaryAmount = parseFloat(document.getElementById('setting-fixed-salary').value) || 0;
+    const salaryDayOfMonth = parseInt(document.getElementById('setting-salary-day').value, 10) || 1;
+
+    state.settings = {
+      initialCreditCardDebt,
+      fixedSalaryAmount,
+      salaryDayOfMonth: Math.min(31, Math.max(1, salaryDayOfMonth))
+    };
+
+    saveUserSettings(state.settings);
+    ensureFixedSalaryForMonth(state.activeMonth);
+    closeSettingsModal();
+    renderApp();
+  });
+}
+
+/**
+ * Kredi Kartı Borç Ödeme Modalı Dinleyicileri
+ */
+function attachCCPaymentModalListeners() {
+  const closeBtn = document.getElementById('cc-modal-close');
+  const cancelBtn = document.getElementById('cc-modal-cancel');
+  const overlay = document.getElementById('cc-payment-modal-overlay');
+  const form = document.getElementById('cc-payment-form');
+
+  const closeCCModal = () => {
+    state.isCCPaymentModalOpen = false;
+    renderModals();
+  };
+
+  closeBtn?.addEventListener('click', closeCCModal);
+  cancelBtn?.addEventListener('click', closeCCModal);
+  overlay?.addEventListener('click', (e) => {
+    if (e.target === overlay) closeCCModal();
+  });
+
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const amount = parseFloat(document.getElementById('cc-payment-amount').value);
+    const date = document.getElementById('cc-payment-date').value;
+    const description = document.getElementById('cc-payment-description').value.trim() || 'Kredi Kartı Borç Ödemesi';
+    const monthKey = getMonthKey(date);
+
+    if (isNaN(amount) || amount <= 0) {
+      alert('Lütfen geçerli bir pozitif ödeme tutarı girin.');
+      return;
+    }
+
+    const paymentTx = {
+      id: 'cc_pay_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+      type: 'cc_payment',
+      category: 'Kredi Kartı',
+      amount,
+      date,
+      monthKey,
+      description,
+      createdAt: Date.now()
+    };
+
+    state.transactions.unshift(paymentTx);
+    saveTransactions(state.transactions);
+
+    closeCCModal();
+    renderApp();
   });
 }
 
