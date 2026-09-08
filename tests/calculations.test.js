@@ -6,6 +6,9 @@ import {
   calculateCumulativeNetWorth,
   calculateCategoryBreakdown,
   calculateSubcategoryBreakdown,
+  calculateCreditCardDebt,
+  calculateCashBalance,
+  calculateRealNetWorth,
   getMonthKey,
   formatCurrency,
   formatPercent
@@ -41,14 +44,10 @@ export function runTests() {
   // Test 1: calculateMonthlyTotals for 2026-09
   const septTotals = calculateMonthlyTotals(sampleTransactions, '2026-09');
   assert(septTotals.income === 55000, 'Aylık gelir 55.000 olmalı');
-  // Toplam Gider: 1200 + 300 + 6000 + 1500 + 500 + 10000 = 19500
   assert(septTotals.expense === 19500, 'Aylık gider 19.500 olmalı');
   assert(septTotals.net === 35500, 'Aylık net fark (55000 - 19500) = 35.500 olmalı');
 
   // Test 2: calculateCumulativeNetWorth
-  // Total Income: 40000 + 55000 = 95000
-  // Total Expense: 1000 + 19500 = 20500
-  // Cumulative Net Worth: 95000 - 20500 = 74500
   const netWorth = calculateCumulativeNetWorth(sampleTransactions);
   assert(netWorth === 74500, 'Kümülatif Net Varlık 74.500 olmalı');
 
@@ -56,16 +55,13 @@ export function runTests() {
   const breakdown = calculateCategoryBreakdown(sampleTransactions, '2026-09');
   assert(breakdown.length === 3, '2026-09 döneminde 3 gider kategorisi olmalı (Yatırım, Market, Faturalar)');
   
-  // Yatırım: 10000 / 19500 = ~51.28%
   const yatirim = breakdown.find(b => b.name === 'Yatırım');
   assert(yatirim && yatirim.total === 10000, 'Yatırım toplamı 10.000 olmalı');
   assert(Math.round(yatirim.percentage * 100) / 100 === 51.28, 'Yatırım yüzdesi %51.28 olmalı');
 
-  // Market: 8000 / 19500 = ~41.03%
   const market = breakdown.find(b => b.name === 'Market');
   assert(market && market.total === 8000, 'Market toplamı 8.000 olmalı');
 
-  // Faturalar: 1500 / 19500 = ~7.69%
   const fatura = breakdown.find(b => b.name === 'Faturalar');
   assert(fatura && fatura.total === 1500, 'Faturalar toplamı 1.500 olmalı');
 
@@ -74,11 +70,44 @@ export function runTests() {
   assert(marketSubs.length === 3, 'Market kategorisinde 3 alt başlık olmalı');
   const mecburi = marketSubs.find(s => s.name.includes('Mecburi'));
   assert(mecburi && mecburi.total === 6000, 'Mecburi market 6.000 olmalı');
-  // 6000 / 8000 = 75%
   assert(mecburi.percentage === 75, 'Mecburi market alt başlık yüzdesi %75 olmalı');
 
   // Test 5: Month key utility
   assert(getMonthKey('2026-09-15') === '2026-09', 'Tarihten ay anahtarı doğru çıkarılmalı');
+
+  // ================= KREDİ KARTI VE ÇİFT SAYMAYI ÖNLEME TESTLERİ =================
+  const ccScenarioTransactions = [
+    // 50.000 TL Maaş
+    { id: 'c1', type: 'income', category: 'Maaş', amount: 50000, monthKey: '2026-09', date: '2026-09-01' },
+    // 5.000 TL Kredi Kartıyla Market Harcaması
+    { id: 'c2', type: 'expense', paymentMethod: 'credit_card', category: 'Market', amount: 5000, monthKey: '2026-09', date: '2026-09-02' },
+    // 1.000 TL Nakit Fatura Harcaması
+    { id: 'c3', type: 'expense', paymentMethod: 'cash', category: 'Faturalar', amount: 1000, monthKey: '2026-09', date: '2026-09-03' },
+    // 20.000 TL Kredi Kartı Borcu Ödemesi (Maaştan karta yatırıldı)
+    { id: 'c4', type: 'cc_payment', category: 'Kredi Kartı', amount: 20000, monthKey: '2026-09', date: '2026-09-15' },
+  ];
+
+  const initialDebt = 30000; // Geçmişten kalan 30.000 TL kart borcu
+
+  // Test 6: Güncel Kart Borcu Hesabı
+  // Borç = 30.000 (başlangıç) + 5.000 (kart harcaması) - 20.000 (ödeme) = 15.000 TL
+  const currentDebt = calculateCreditCardDebt(ccScenarioTransactions, initialDebt);
+  assert(currentDebt === 15000, 'Güncel kredi kartı borcu 15.000 TL olmalı');
+
+  // Test 7: Kullanılabilir Nakit Bakiyesi Hesabı
+  // Nakit = 50.000 (gelir) - 1.000 (nakit harcama) - 20.000 (karta yatırılan) = 29.000 TL
+  const cashBalance = calculateCashBalance(ccScenarioTransactions);
+  assert(cashBalance === 29000, 'Kullanılabilir nakit bakiyesi 29.000 TL olmalı');
+
+  // Test 8: Gerçek Net Varlık Hesabı (Çift Sayma Engellendi)
+  // Net Varlık = Nakit (29.000) - Kalan Borç (15.000) = 14.000 TL
+  // Aynı zamanda = 50.000 (gelir) - 6.000 (tüm harcamalar) - 30.000 (eski borç) = 14.000 TL!
+  const realNetWorth = calculateRealNetWorth(ccScenarioTransactions, initialDebt);
+  assert(realNetWorth === 14000, 'Gerçek Net Varlık (Nakit - Kalan Borç) 14.000 TL olmalı');
+
+  // Test 9: cc_payment işleminin aylık harcamaları şişirmediğinin teyidi
+  const ccMonthTotals = calculateMonthlyTotals(ccScenarioTransactions, '2026-09');
+  assert(ccMonthTotals.expense === 6000, 'Aylık gider 6.000 TL olmalı (20.000 TL kart ödemesi gider olarak çift sayılmamalı)');
 
   return results;
 }

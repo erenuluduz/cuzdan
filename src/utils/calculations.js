@@ -62,24 +62,84 @@ export function calculateMonthlyTotals(transactions = [], monthKey = '') {
 }
 
 /**
- * Sisteme girilmiş tüm zamanların kümülatif net varlığını hesaplar (Toplam Gelirler - Toplam Giderler).
+ * Sisteme girilmiş tüm zamanların kümülatif net varlığını hesaplar.
+ * Eğer başlangıç kart borcu varsa bunu da düşer.
  * @param {Array} transactions
+ * @param {number} initialDebt
  * @returns {number}
  */
-export function calculateCumulativeNetWorth(transactions = []) {
+export function calculateCumulativeNetWorth(transactions = [], initialDebt = 0) {
+  return calculateRealNetWorth(transactions, initialDebt);
+}
+
+/**
+ * Güncel Kredi Kartı Borcunu hesaplar.
+ * Borç = Başlangıç Borcu + Kredi Kartıyla Yapılan Harcamalar - Kart Borcuna Yapılan Ödemeler
+ * @param {Array} transactions 
+ * @param {number} initialDebt 
+ * @returns {number}
+ */
+export function calculateCreditCardDebt(transactions = [], initialDebt = 0) {
+  let debt = Number(initialDebt) || 0;
+
+  for (const item of transactions) {
+    const amount = Number(item.amount) || 0;
+    if (item.type === 'expense' && item.paymentMethod !== 'cash') {
+      // paymentMethod === 'credit_card' veya belirtilmemişse varsayılan karttır
+      debt += amount;
+    } else if (item.type === 'cc_payment') {
+      debt -= amount;
+    }
+  }
+
+  return Math.max(0, debt); // Borç negatif olamaz (fazla ödeme hariç)
+}
+
+/**
+ * Kullanıcının elindeki kullanılabilir net nakit/banka bakiyesini hesaplar.
+ * Nakit = Toplam Gelirler - Nakit Harcamalar - Karta Yapılan Ödemeler
+ * @param {Array} transactions 
+ * @returns {number}
+ */
+export function calculateCashBalance(transactions = []) {
+  let balance = 0;
+
+  for (const item of transactions) {
+    const amount = Number(item.amount) || 0;
+    if (item.type === 'income') {
+      balance += amount;
+    } else if (item.type === 'expense' && item.paymentMethod === 'cash') {
+      balance -= amount;
+    } else if (item.type === 'cc_payment') {
+      balance -= amount;
+    }
+  }
+
+  return balance;
+}
+
+/**
+ * Gerçek Net Varlık Hesabı (Kullanılabilir Nakit - Kalan Kredi Kartı Borcu).
+ * Bu formül çift saymayı %100 önler ve geçmiş birikmiş borcu da hesaba katar.
+ * @param {Array} transactions 
+ * @param {number} initialDebt 
+ * @returns {number}
+ */
+export function calculateRealNetWorth(transactions = [], initialDebt = 0) {
   let totalIncome = 0;
-  let totalExpense = 0;
+  let totalExpenses = 0;
 
   for (const item of transactions) {
     const amount = Number(item.amount) || 0;
     if (item.type === 'income') {
       totalIncome += amount;
     } else if (item.type === 'expense') {
-      totalExpense += amount;
+      totalExpenses += amount;
     }
+    // cc_payment burada tekrar düşülmez çünkü borç transferidir
   }
 
-  return totalIncome - totalExpense;
+  return totalIncome - totalExpenses - (Number(initialDebt) || 0);
 }
 
 /**

@@ -7,8 +7,47 @@ import { ALL_DEFAULT_CATEGORIES } from '../constants/categories.js';
 const STORAGE_KEYS = {
   TRANSACTIONS: 'budget_transactions_v1',
   CATEGORIES: 'budget_categories_v1',
-  ACTIVE_MONTH: 'budget_active_month_v1'
+  ACTIVE_MONTH: 'budget_active_month_v1',
+  SETTINGS: 'budget_settings_v1'
 };
+
+export const DEFAULT_USER_SETTINGS = {
+  initialCreditCardDebt: 0,
+  fixedSalaryAmount: 0,
+  salaryDayOfMonth: 1
+};
+
+/**
+ * Kullanıcı ayarlarını localStorage'dan çeker.
+ * @returns {{ initialCreditCardDebt: number, fixedSalaryAmount: number, salaryDayOfMonth: number }}
+ */
+export function loadUserSettings() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+    if (!raw) return { ...DEFAULT_USER_SETTINGS };
+    const parsed = JSON.parse(raw);
+    return {
+      initialCreditCardDebt: Number(parsed.initialCreditCardDebt) || 0,
+      fixedSalaryAmount: Number(parsed.fixedSalaryAmount) || 0,
+      salaryDayOfMonth: Number(parsed.salaryDayOfMonth) || 1
+    };
+  } catch (err) {
+    console.error('Ayarlar yüklenirken hata:', err);
+    return { ...DEFAULT_USER_SETTINGS };
+  }
+}
+
+/**
+ * Kullanıcı ayarlarını kaydeder.
+ * @param {Object} settings 
+ */
+export function saveUserSettings(settings) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+  } catch (err) {
+    console.error('Ayarlar kaydedilirken hata:', err);
+  }
+}
 
 /**
  * Kayıtlı işlemleri localStorage'dan çeker.
@@ -83,13 +122,14 @@ export function saveActiveMonth(monthKey) {
  * @param {Array} transactions 
  * @param {Array} categories 
  */
-export function exportBackupJSON(transactions, categories) {
+export function exportBackupJSON(transactions, categories, settings = null) {
   const data = {
     version: 1,
     exportedAt: new Date().toISOString(),
     appName: 'GelirGiderButceTakip',
     transactions: transactions || [],
-    categories: categories || []
+    categories: categories || [],
+    settings: settings || loadUserSettings()
   };
 
   const jsonStr = JSON.stringify(data, null, 2);
@@ -109,7 +149,7 @@ export function exportBackupJSON(transactions, categories) {
 /**
  * JSON yedek dosya içeriğini doğrular ve ayrıştırır.
  * @param {string} jsonString 
- * @returns {{ valid: boolean, transactions?: Array, categories?: Array, error?: string }}
+ * @returns {{ valid: boolean, transactions?: Array, categories?: Array, settings?: Object, error?: string }}
  */
 export function parseAndValidateBackup(jsonString) {
   try {
@@ -125,7 +165,8 @@ export function parseAndValidateBackup(jsonString) {
     return {
       valid: true,
       transactions: parsed.transactions,
-      categories: Array.isArray(parsed.categories) ? parsed.categories : ALL_DEFAULT_CATEGORIES
+      categories: Array.isArray(parsed.categories) ? parsed.categories : ALL_DEFAULT_CATEGORIES,
+      settings: parsed.settings || DEFAULT_USER_SETTINGS
     };
   } catch (err) {
     return { valid: false, error: 'Dosya okuma hatası: ' + err.message };
