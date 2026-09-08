@@ -81,18 +81,28 @@ export function renderKPICards(props) {
           </div>
         </div>
 
-        <div class="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between">
+        <div class="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between gap-1.5 flex-wrap">
           <span class="text-[10px] text-slate-400 font-medium">
             ${hasDebt ? 'Aktif Borç' : 'Borç Yok'}
           </span>
-          <button 
-            id="btn-kpi-pay-cc" 
-            class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 transition shadow-sm flex items-center gap-1"
-            title="Kredi kartı borcunuza ödeme yapın"
-          >
-            <i data-lucide="corner-down-right" class="w-3 h-3"></i>
-            <span>Borç Öde</span>
-          </button>
+          <div class="flex items-center gap-1.5">
+            <button 
+              id="btn-kpi-add-interest" 
+              class="px-2 py-1 text-[11px] font-bold rounded-lg bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 transition shadow-sm flex items-center gap-1"
+              title="Ekstreye yansıyan kart faizini ekleyin"
+            >
+              <i data-lucide="percent" class="w-3 h-3"></i>
+              <span>+ Faiz</span>
+            </button>
+            <button 
+              id="btn-kpi-pay-cc" 
+              class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 transition shadow-sm flex items-center gap-1"
+              title="Kredi kartı borcunuza ödeme yapın"
+            >
+              <i data-lucide="corner-down-right" class="w-3 h-3"></i>
+              <span>Borç Öde</span>
+            </button>
+          </div>
         </div>
       </div>
 

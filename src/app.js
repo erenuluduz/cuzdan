@@ -36,6 +36,7 @@ import { renderTransactionModal } from './components/TransactionModal.js';
 import { renderCategoryModal } from './components/CategoryModal.js';
 import { renderSettingsModal } from './components/SettingsModal.js';
 import { renderCCPaymentModal } from './components/CCPaymentModal.js';
+import { renderCCInterestModal } from './components/CCInterestModal.js';
 
 // Uygulama Durumu (State)
 const state = {
@@ -52,7 +53,8 @@ const state = {
   },
   isCategoryModalOpen: false,
   isSettingsModalOpen: false,
-  isCCPaymentModalOpen: false
+  isCCPaymentModalOpen: false,
+  isCCInterestModalOpen: false
 };
 
 /**
@@ -233,6 +235,11 @@ function renderModals() {
       activeMonth: state.activeMonth
     });
     attachCCPaymentModalListeners();
+  } else if (state.isCCInterestModalOpen) {
+    modalRoot.innerHTML = renderCCInterestModal({
+      activeMonth: state.activeMonth
+    });
+    attachCCInterestModalListeners();
   } else {
     modalRoot.innerHTML = '';
   }
@@ -307,6 +314,10 @@ function attachAppListeners() {
   });
   document.getElementById('btn-kpi-pay-cc')?.addEventListener('click', () => {
     state.isCCPaymentModalOpen = true;
+    renderModals();
+  });
+  document.getElementById('btn-kpi-add-interest')?.addEventListener('click', () => {
+    state.isCCInterestModalOpen = true;
     renderModals();
   });
   document.getElementById('btn-export-backup')?.addEventListener('click', () => {
@@ -694,6 +705,59 @@ function attachCCPaymentModalListeners() {
     saveTransactions(state.transactions);
 
     closeCCModal();
+    renderApp();
+  });
+}
+
+/**
+ * Kredi Kartı Faizi Ekleme Modalı Dinleyicileri
+ */
+function attachCCInterestModalListeners() {
+  const closeBtn = document.getElementById('cc-interest-modal-close');
+  const cancelBtn = document.getElementById('cc-interest-modal-cancel');
+  const overlay = document.getElementById('cc-interest-modal-overlay');
+  const form = document.getElementById('cc-interest-form');
+
+  const closeInterestModal = () => {
+    state.isCCInterestModalOpen = false;
+    renderModals();
+  };
+
+  closeBtn?.addEventListener('click', closeInterestModal);
+  cancelBtn?.addEventListener('click', closeInterestModal);
+  overlay?.addEventListener('click', (e) => {
+    if (e.target === overlay) closeInterestModal();
+  });
+
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const amount = parseFloat(document.getElementById('cc-interest-amount').value);
+    const date = document.getElementById('cc-interest-date').value;
+    const description = document.getElementById('cc-interest-description').value.trim() || 'Kredi Kartı Ekstre Faizi & Vergiler';
+    const monthKey = getMonthKey(date);
+
+    if (isNaN(amount) || amount <= 0) {
+      alert('Lütfen geçerli bir pozitif faiz tutarı girin.');
+      return;
+    }
+
+    const interestTx = {
+      id: 'cc_int_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+      type: 'expense',
+      paymentMethod: 'credit_card',
+      category: 'Kredi Kartı',
+      subcategory: 'Kart Faizi & Masraflar',
+      amount,
+      date,
+      monthKey,
+      description,
+      createdAt: Date.now()
+    };
+
+    state.transactions.unshift(interestTx);
+    saveTransactions(state.transactions);
+
+    closeInterestModal();
     renderApp();
   });
 }
