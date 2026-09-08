@@ -64,7 +64,7 @@ export function renderKPICards(props) {
       </div>
 
       <!-- 3. Kredi Kartı Güncel Borç Durumu -->
-      <div class="glass-panel rounded-2xl p-4 sm:p-5 relative overflow-hidden transition duration-200 border border-amber-500/30 bg-gradient-to-br from-amber-950/20 to-slate-900/90 flex flex-col justify-between">
+      <div class="glass-panel kpi-gradient-debt rounded-2xl p-4 sm:p-5 relative overflow-hidden transition duration-200 hover:border-amber-500/40 flex flex-col justify-between">
         <div>
           <div class="flex items-center justify-between">
             <span class="text-[11px] font-semibold uppercase tracking-wider text-amber-300 flex items-center gap-1">

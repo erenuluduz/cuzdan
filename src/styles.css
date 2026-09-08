@@ -41,6 +41,10 @@
   background: radial-gradient(120% 120% at 100% 0%, rgba(239, 68, 68, 0.15) 0%, rgba(30, 41, 59, 0.8) 100%);
 }
 
+.kpi-gradient-debt {
+  background: radial-gradient(120% 120% at 100% 0%, rgba(245, 158, 11, 0.15) 0%, rgba(30, 41, 59, 0.8) 100%);
+}
+
 .kpi-gradient-net {
   background: radial-gradient(120% 120% at 100% 0%, rgba(59, 130, 246, 0.15) 0%, rgba(30, 41, 59, 0.8) 100%);
 }
