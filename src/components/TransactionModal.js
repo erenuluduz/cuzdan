@@ -83,6 +83,41 @@ export function renderTransactionModal(props) {
           <input type="hidden" id="trans-type" value="${type}">
           ${isEditing ? `<input type="hidden" id="trans-id" value="${editingTransaction.id}">` : ''}
 
+          <!-- Ödeme Yöntemi (Yalnızca Giderler İçin) -->
+          ${!isIncome ? `
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Ödeme Yöntemi *</label>
+              <div class="grid grid-cols-2 gap-2 p-1 bg-slate-950/80 rounded-xl border border-slate-800">
+                <label class="cursor-pointer">
+                  <input 
+                    type="radio" 
+                    name="payment-method-radio" 
+                    value="credit_card" 
+                    class="peer hidden" 
+                    ${(editingTransaction?.paymentMethod || 'credit_card') === 'credit_card' ? 'checked' : ''}
+                  >
+                  <div class="py-1.5 px-3 text-xs font-bold rounded-lg text-center transition flex items-center justify-center gap-1.5 text-slate-400 peer-checked:bg-purple-600 peer-checked:text-white peer-checked:shadow-sm">
+                    <i data-lucide="credit-card" class="w-3.5 h-3.5"></i>
+                    <span>Kredi Kartı</span>
+                  </div>
+                </label>
+                <label class="cursor-pointer">
+                  <input 
+                    type="radio" 
+                    name="payment-method-radio" 
+                    value="cash" 
+                    class="peer hidden" 
+                    ${editingTransaction?.paymentMethod === 'cash' ? 'checked' : ''}
+                  >
+                  <div class="py-1.5 px-3 text-xs font-bold rounded-lg text-center transition flex items-center justify-center gap-1.5 text-slate-400 peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:shadow-sm">
+                    <i data-lucide="banknote" class="w-3.5 h-3.5"></i>
+                    <span>Nakit / Banka</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+          ` : ''}
+
           <!-- Tutar Girişi -->
           <div>
             <label class="block text-xs font-semibold text-slate-300 mb-1.5">Tutar (TL) *</label>
