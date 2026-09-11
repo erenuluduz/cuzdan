@@ -155,6 +155,21 @@ export function renderSettingsModal(props) {
             </div>
           </div>
 
+          <!-- Yeni Kullanıcılar İçin Hızlı Kullanım Rehberi (Tutorial) -->
+          <div class="pt-4 border-t border-slate-800 space-y-2.5">
+            <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="help-circle" class="w-3.5 h-3.5 text-purple-400"></i>
+              <span>Nasıl Kullanılır? (Hızlı Rehber)</span>
+            </h4>
+            <div class="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800/80 text-[11px] text-slate-300 space-y-2 leading-relaxed">
+              <p><strong class="text-purple-300">1. İşlem Ekleme:</strong> Sağ alttaki mor <strong class="text-white">+ küre butona</strong> basarak gelir veya giderlerinizi ekleyin.</p>
+              <p><strong class="text-purple-300">2. Kategori Ekleme:</strong> Formdaki kategori ve alt başlık seçim listelerinin en altındaki <em class="text-purple-300">"➕ + Yeni Kategori Ekle..."</em> seçeneğiyle anında yeni kategoriler tanımlayabilirsiniz.</p>
+              <p><strong class="text-purple-300">3. Kart Borcu Yönetimi:</strong> Kredi kartı harcamalarınız otomatik borca eklenir. Borcunuzu ödediğinizde kartın üzerindeki <em class="text-amber-300">"Borç Öde"</em> butonunu kullanın.</p>
+              <p><strong class="text-purple-300">4. Sekmeler Arası Geçiş:</strong> Ekranı parmağınızla sağa/sola kaydırarak analiz pasta grafiğine ve gelir-gider tablolarına geçebilirsiniz.</p>
+              <p><strong class="text-purple-300">5. Güvenlik & Yedekleme:</strong> Tüm verileriniz cihazınızdadır. İstediğiniz an yukarıdaki <em class="text-emerald-300">"Yedek İndir"</em> butonuyla yedeğinizi kaydedebilirsiniz.</p>
+            </div>
+          </div>
+
         </div>
 
       </div>

@@ -29,3 +29,13 @@ Kişisel bütçenizi, gelirlerinizi, harcamalarınızı ve toplam net varlığı
   - **Özel Kategori Yönetimi:** Dilediğiniz an yeni ana kategori ve alt başlık ekleme desteği.
 - **Güvenli Yerel Depolama (LocalStorage):** Verileriniz hiçbir uzak sunucuya gönderilmez, cihazınızın tarayıcısında şifresiz ve anlık olarak saklanır.
 - **JSON Yedekleme (Export / Import):** Tek tıkla tüm finansal verilerinizi `.json` dosyası olarak bilgisayarınıza indirebilir ve istediğiniz zaman geri yükleyebilirsiniz.
+
+---
+
+## 📖 Kullanım Rehberi (Tutorial) & Gelecek Özellikler (Roadmap)
+
+* Yeni başlayanlar için adım adım kullanım rehberi ve planlanan yeni özelliklerin detaylı listesi için [**ROADMAP.md**](./ROADMAP.md) dosyasını inceleyebilirsiniz.
+* **Hızlı Başlangıç:**
+  1. Sağ üstteki **Ayarlar (Çark)** ikonundan sabit maaş ve başlangıç kart borcunuzu kaydedin.
+  2. Sağ alttaki **`+` Küre Buton** ile gelir/gider ekleyin.
+  3. Ekranı sağa/sola kaydırarak analiz ve dağılım pasta grafiklerini keşfedin.
