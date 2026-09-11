@@ -39,7 +39,7 @@ export function renderKPICards(props) {
           </div>
         </div>
         <div class="text-[11px] text-emerald-400/80 mt-2 flex items-center gap-1 font-medium">
-          <span>${activeMonthName} Toplamı</span>
+          <span>${activeMonthName} Gelirleri</span>
         </div>
       </div>
 

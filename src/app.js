@@ -142,29 +142,45 @@ function renderApp() {
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
   const isSummaryTab = state.activeTab === 'summary';
+  const currentMonthKey = getMonthKey(new Date());
+  const isCurrentMonth = state.activeMonth === currentMonthKey;
 
   // Ana Sayfa Şablonu
   appContainer.innerHTML = `
-    ${renderHeader({ activeMonth: state.activeMonth })}
+    ${renderHeader()}
+
+    <!-- Sabit ve Ortalanmış Ay Seçici Kapsülü (Sticky Header-Below) -->
+    <div class="sticky top-[64px] z-20 py-2.5 px-4 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/40 flex justify-center">
+      <div class="flex items-center space-x-1 sm:space-x-2 bg-slate-900/95 p-1 sm:p-1.5 rounded-2xl border border-slate-700/70 shadow-lg shadow-black/40">
+        <button id="btn-prev-month" title="Önceki Ay" class="p-1.5 sm:p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition">
+          <i data-lucide="chevron-left" class="w-4 h-4"></i>
+        </button>
+        
+        <div class="flex items-center space-x-1.5 px-2 sm:px-3 py-1">
+          <i data-lucide="calendar" class="w-3.5 h-3.5 text-purple-400"></i>
+          <span class="font-bold text-xs sm:text-sm text-slate-100 min-w-[100px] sm:min-w-[115px] text-center capitalize">
+            ${activeMonthName}
+          </span>
+        </div>
+
+        <button id="btn-next-month" title="Sonraki Ay" class="p-1.5 sm:p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition">
+          <i data-lucide="chevron-right" class="w-4 h-4"></i>
+        </button>
+
+        ${!isCurrentMonth ? `
+          <button id="btn-current-month" class="text-[11px] px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-purple-300 transition font-semibold ml-1">
+            Bu Ay
+          </button>
+        ` : ''}
+      </div>
+    </div>
 
     <main class="max-w-7xl mx-auto pb-24 flex-1 w-full overflow-hidden">
       <!-- İki Sekmeli Kaydırılabilir Alan (Tabs Slider) -->
       <div id="tabs-slider" class="flex transition-transform duration-300 ease-out w-[200%]" style="transform: translateX(${isSummaryTab ? '0%' : '-50%'});">
         
         <!-- 1. SEKME: ÖZET -->
-        <div class="w-1/2 px-4 sm:px-6 lg:px-8 py-5 space-y-6">
-          <!-- Hızlı İşlem Ekle Butonları -->
-          <div class="grid grid-cols-2 gap-3 max-w-md mx-auto sm:max-w-none">
-            <button id="btn-quick-income" class="py-3 px-4 rounded-2xl font-bold text-xs sm:text-sm bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 transition flex items-center justify-center gap-2">
-              <i data-lucide="plus-circle" class="w-4 h-4"></i>
-              <span>+ Gelir Ekle</span>
-            </button>
-            <button id="btn-quick-expense" class="py-3 px-4 rounded-2xl font-bold text-xs sm:text-sm bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/25 transition flex items-center justify-center gap-2">
-              <i data-lucide="minus-circle" class="w-4 h-4"></i>
-              <span>- Gider Ekle</span>
-            </button>
-          </div>
-
+        <div class="w-1/2 px-4 sm:px-6 lg:px-8 py-4 space-y-6">
           <!-- KPI Kartları (5 Kolon) -->
           ${renderKPICards({
             monthlyTotals,
@@ -175,7 +191,7 @@ function renderApp() {
         </div>
 
         <!-- 2. SEKME: ANALİZ & TABLOLAR -->
-        <div class="w-1/2 px-4 sm:px-6 lg:px-8 py-5 space-y-6">
+        <div class="w-1/2 px-4 sm:px-6 lg:px-8 py-4 space-y-6">
           <!-- Harcama Pasta Grafiği & Yüzdesel Dağılım -->
           ${renderExpenseChartHTML({
             drillDownCategory: state.drillDownCategory,
@@ -195,6 +211,11 @@ function renderApp() {
 
       </div>
     </main>
+
+    <!-- Ekrandan Bağımsız Sabit '+' Küre Buton (Floating Action Button - FAB) -->
+    <button id="btn-fab-add" title="Yeni İşlem Ekle" class="fixed bottom-[78px] right-5 z-40 w-14 h-14 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 shadow-2xl shadow-purple-600/40 text-white flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all border border-white/20">
+      <i data-lucide="plus" class="w-7 h-7"></i>
+    </button>
 
     <!-- Sabit Alt Gezinme Çubuğu (Bottom Navigation Bar) -->
     <nav class="fixed bottom-0 inset-x-0 z-40 bg-slate-900/90 backdrop-blur-xl border-t border-slate-800/80 px-6 py-2.5 pb-[max(0.6rem,env(safe-area-inset-bottom))] flex items-center justify-around shadow-2xl">
@@ -390,9 +411,8 @@ function attachAppListeners() {
   document.getElementById('nav-tab-summary')?.addEventListener('click', () => switchTab('summary'));
   document.getElementById('nav-tab-analytics')?.addEventListener('click', () => switchTab('analytics'));
 
-  // Hızlı İşlem Ekleme Butonları (Özet Sekmesinde)
-  document.getElementById('btn-quick-income')?.addEventListener('click', () => openTransactionModal('income'));
-  document.getElementById('btn-quick-expense')?.addEventListener('click', () => openTransactionModal('expense'));
+  // Sabit '+' Küre Butonu (FAB)
+  document.getElementById('btn-fab-add')?.addEventListener('click', () => openTransactionModal('expense'));
 
   // Ay Değiştirme
   document.getElementById('btn-prev-month')?.addEventListener('click', () => changeMonth(-1));
