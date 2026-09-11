@@ -2,7 +2,7 @@
  * İki Kolonlu Gelir ve Gider Tabloları Listesi Bileşeni
  */
 
-import { formatCurrency } from '../utils/calculations.js';
+import { formatCurrency, formatDateTR } from '../utils/calculations.js';
 
 /**
  * Gelir ve Gider tablolarının HTML şablonunu oluşturur.
@@ -183,7 +183,7 @@ export function renderTransactionTables(props) {
                     ${item.description ? `
                       <p class="text-xs text-slate-400 truncate mt-0.5">${item.description}</p>
                     ` : ''}
-                    <span class="text-[10px] text-slate-500 block mt-0.5">${item.date}</span>
+                    <span class="text-[10px] text-slate-500 block mt-0.5">${formatDateTR(item.date)}</span>
                   </div>
                 </div>
 
@@ -233,7 +233,7 @@ function renderIncomeRow(item, color) {
             <span class="font-bold text-xs text-slate-100">${item.subcategory || item.category}</span>
           </div>
           ${item.description ? `<p class="text-[11px] text-slate-400 truncate mt-0.5">${item.description}</p>` : ''}
-          <span class="text-[10px] text-slate-500 block mt-0.5">${item.date}</span>
+          <span class="text-[10px] text-slate-500 block mt-0.5">${formatDateTR(item.date)}</span>
         </div>
       </div>
 

@@ -260,3 +260,25 @@ export function formatMonthName(monthKey) {
   const date = new Date(Number(year), Number(month) - 1, 1);
   return date.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
 }
+
+/**
+ * YYYY-MM-DD veya Date nesnesini Gün.Ay.Yıl (GG.AA.YYYY) sıralamasına dönüştürür.
+ * @param {string|Date} dateStr Örn: '2026-09-12'
+ * @returns {string} Örn: '12.09.2026'
+ */
+export function formatDateTR(dateStr) {
+  if (!dateStr) return '';
+  if (typeof dateStr === 'string' && dateStr.includes('-')) {
+    const parts = dateStr.trim().split('T')[0].split('-');
+    if (parts.length === 3) {
+      const [year, month, day] = parts;
+      return `${day.padStart(2, '0')}.${month.padStart(2, '0')}.${year}`;
+    }
+  }
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return String(dateStr);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}.${month}.${year}`;
+}

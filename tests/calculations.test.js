@@ -10,6 +10,8 @@ import {
   calculateCashBalance,
   calculateRealNetWorth,
   getMonthKey,
+  formatMonthName,
+  formatDateTR,
   formatCurrency,
   formatPercent
 } from '../src/utils/calculations.js';
@@ -108,6 +110,11 @@ export function runTests() {
   // Test 9: cc_payment işleminin aylık harcamaları şişirmediğinin teyidi
   const ccMonthTotals = calculateMonthlyTotals(ccScenarioTransactions, '2026-09');
   assert(ccMonthTotals.expense === 6000, 'Aylık gider 6.000 TL olmalı (20.000 TL kart ödemesi gider olarak çift sayılmamalı)');
+
+  // Test 10: formatDateTR (Gün.Ay.Yıl formatı)
+  assert(formatDateTR('2026-09-12') === '12.09.2026', '2026-09-12 tarihi 12.09.2026 olarak formatlanmalı');
+  assert(formatDateTR('2026-01-05') === '05.01.2026', '2026-01-05 tarihi 05.01.2026 olarak formatlanmalı');
+  assert(formatDateTR('') === '', 'Boş tarih boş string dönmeli');
 
   return results;
 }
