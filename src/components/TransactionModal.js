@@ -139,7 +139,13 @@ export function renderTransactionModal(props) {
           <!-- Kategori & Alt Kategori Seçimi -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Ana Kategori *</label>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="block text-xs font-semibold text-slate-300">Ana Kategori *</label>
+                <button type="button" id="btn-toggle-inline-category" class="text-[11px] text-purple-400 hover:text-purple-300 font-semibold transition flex items-center gap-1">
+                  <i data-lucide="plus" class="w-3 h-3"></i>
+                  <span>Yeni Kategori</span>
+                </button>
+              </div>
               <select 
                 id="trans-category" 
                 required
@@ -151,10 +157,34 @@ export function renderTransactionModal(props) {
                   </option>
                 `).join('')}
               </select>
+
+              <!-- Inline Yeni Kategori Ekleme Kutusu -->
+              <div id="inline-category-box" class="hidden mt-2 p-2.5 rounded-xl bg-slate-950 border border-purple-500/40 space-y-2 animate-fade-in shadow-lg">
+                <input 
+                  type="text" 
+                  id="inline-category-input" 
+                  placeholder="Yeni kategori adı..." 
+                  class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-400"
+                >
+                <div class="flex items-center justify-end gap-1.5">
+                  <button type="button" id="btn-cancel-inline-category" class="px-2.5 py-1 text-[11px] text-slate-400 hover:text-white rounded transition">
+                    Vazgeç
+                  </button>
+                  <button type="button" id="btn-save-inline-category" class="px-3 py-1 text-[11px] font-bold bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition shadow-sm">
+                    Ekle
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Alt Başlık *</label>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="block text-xs font-semibold text-slate-300">Alt Başlık *</label>
+                <button type="button" id="btn-toggle-inline-subcategory" class="text-[11px] text-purple-400 hover:text-purple-300 font-semibold transition flex items-center gap-1">
+                  <i data-lucide="plus" class="w-3 h-3"></i>
+                  <span>Yeni Alt Başlık</span>
+                </button>
+              </div>
               <select 
                 id="trans-subcategory" 
                 required
@@ -166,6 +196,24 @@ export function renderTransactionModal(props) {
                   </option>
                 `).join('')}
               </select>
+
+              <!-- Inline Yeni Alt Başlık Ekleme Kutusu -->
+              <div id="inline-subcategory-box" class="hidden mt-2 p-2.5 rounded-xl bg-slate-950 border border-purple-500/40 space-y-2 animate-fade-in shadow-lg">
+                <input 
+                  type="text" 
+                  id="inline-subcategory-input" 
+                  placeholder="Yeni alt başlık adı..." 
+                  class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-400"
+                >
+                <div class="flex items-center justify-end gap-1.5">
+                  <button type="button" id="btn-cancel-inline-subcategory" class="px-2.5 py-1 text-[11px] text-slate-400 hover:text-white rounded transition">
+                    Vazgeç
+                  </button>
+                  <button type="button" id="btn-save-inline-subcategory" class="px-3 py-1 text-[11px] font-bold bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition shadow-sm">
+                    Ekle
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 

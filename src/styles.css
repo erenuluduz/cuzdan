@@ -1,8 +1,11 @@
-/* Modern Finans Arayüzü Ek Stilleri */
+/* Modern Finans Arayüzü & Cüzdanım Stilleri */
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 :root {
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --scroll-glow-x: 100%;
+  --scroll-glow-y: 0%;
+  --scroll-blur: 16px;
 }
 
 /* Özel kaydırma çubuğu */
@@ -25,6 +28,7 @@
 .glass-panel {
   background: rgba(30, 41, 59, 0.7);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -33,24 +37,78 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+/* Dinamik Camsı Bilgi Kartları */
+.glass-panel-card {
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(var(--scroll-blur, 16px));
+  -webkit-backdrop-filter: blur(var(--scroll-blur, 16px));
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.glass-panel-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.2);
+}
+
+/* Kaydırma ile Renkleri Oynayan Radyal Gradyanlar */
 .kpi-gradient-income {
-  background: radial-gradient(120% 120% at 100% 0%, rgba(16, 185, 129, 0.15) 0%, rgba(30, 41, 59, 0.8) 100%);
+  background: radial-gradient(130% 130% at var(--scroll-glow-x, 100%) var(--scroll-glow-y, 0%), rgba(16, 185, 129, 0.22) 0%, rgba(30, 41, 59, 0.85) 100%);
 }
 
 .kpi-gradient-expense {
-  background: radial-gradient(120% 120% at 100% 0%, rgba(239, 68, 68, 0.15) 0%, rgba(30, 41, 59, 0.8) 100%);
+  background: radial-gradient(130% 130% at var(--scroll-glow-x, 100%) var(--scroll-glow-y, 0%), rgba(239, 68, 68, 0.22) 0%, rgba(30, 41, 59, 0.85) 100%);
 }
 
 .kpi-gradient-debt {
-  background: radial-gradient(120% 120% at 100% 0%, rgba(245, 158, 11, 0.15) 0%, rgba(30, 41, 59, 0.8) 100%);
+  background: radial-gradient(130% 130% at var(--scroll-glow-x, 100%) var(--scroll-glow-y, 0%), rgba(245, 158, 11, 0.22) 0%, rgba(30, 41, 59, 0.85) 100%);
 }
 
 .kpi-gradient-net {
-  background: radial-gradient(120% 120% at 100% 0%, rgba(59, 130, 246, 0.15) 0%, rgba(30, 41, 59, 0.8) 100%);
+  background: radial-gradient(130% 130% at var(--scroll-glow-x, 100%) var(--scroll-glow-y, 0%), rgba(59, 130, 246, 0.22) 0%, rgba(30, 41, 59, 0.85) 100%);
 }
 
 .kpi-gradient-wealth {
-  background: radial-gradient(120% 120% at 100% 0%, rgba(139, 92, 246, 0.22) 0%, rgba(30, 41, 59, 0.85) 100%);
+  background: radial-gradient(130% 130% at var(--scroll-glow-x, 100%) var(--scroll-glow-y, 0%), rgba(139, 92, 246, 0.28) 0%, rgba(30, 41, 59, 0.9) 100%);
+}
+
+/* Küre İçinde Çark Ayarlar Butonu */
+.sphere-settings-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 35% 35%, rgba(168, 85, 247, 0.45), rgba(30, 41, 59, 0.9) 75%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 4px 18px -2px rgba(147, 51, 234, 0.35), inset 0 2px 4px rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.sphere-settings-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 24px 0px rgba(168, 85, 247, 0.55), inset 0 2px 6px rgba(255, 255, 255, 0.35);
+  border-color: rgba(192, 132, 252, 0.4);
+}
+
+.sphere-settings-btn:active {
+  transform: scale(0.94);
+}
+
+.sphere-settings-btn i, 
+.sphere-settings-btn svg {
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sphere-settings-btn:hover i, 
+.sphere-settings-btn:hover svg {
+  transform: rotate(90deg);
 }
 
 /* Animasyonlar */
@@ -72,4 +130,3 @@ body {
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
 }
-

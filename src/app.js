@@ -44,6 +44,7 @@ const state = {
   categories: [],
   settings: { ...DEFAULT_USER_SETTINGS },
   activeMonth: getMonthKey(new Date()),
+  activeTab: 'summary', // 'summary' | 'analytics'
   drillDownCategory: null,
   modal: {
     isOpen: false,
@@ -140,43 +141,72 @@ function renderApp() {
     .filter(t => t.type === 'expense' && t.monthKey === state.activeMonth)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
+  const isSummaryTab = state.activeTab === 'summary';
+
   // Ana Sayfa Şablonu
   appContainer.innerHTML = `
     ${renderHeader({ activeMonth: state.activeMonth })}
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1 w-full">
-      <!-- 1. KPI Kartları (5 Kolon) -->
-      ${renderKPICards({
-        monthlyTotals,
-        cumulativeNetWorth,
-        creditCardDebt,
-        activeMonthName
-      })}
+    <main class="max-w-7xl mx-auto pb-24 flex-1 w-full overflow-hidden">
+      <!-- İki Sekmeli Kaydırılabilir Alan (Tabs Slider) -->
+      <div id="tabs-slider" class="flex transition-transform duration-300 ease-out w-[200%]" style="transform: translateX(${isSummaryTab ? '0%' : '-50%'});">
+        
+        <!-- 1. SEKME: ÖZET -->
+        <div class="w-1/2 px-4 sm:px-6 lg:px-8 py-5 space-y-6">
+          <!-- Hızlı İşlem Ekle Butonları -->
+          <div class="grid grid-cols-2 gap-3 max-w-md mx-auto sm:max-w-none">
+            <button id="btn-quick-income" class="py-3 px-4 rounded-2xl font-bold text-xs sm:text-sm bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 transition flex items-center justify-center gap-2">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i>
+              <span>+ Gelir Ekle</span>
+            </button>
+            <button id="btn-quick-expense" class="py-3 px-4 rounded-2xl font-bold text-xs sm:text-sm bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/25 transition flex items-center justify-center gap-2">
+              <i data-lucide="minus-circle" class="w-4 h-4"></i>
+              <span>- Gider Ekle</span>
+            </button>
+          </div>
 
-      <!-- 2. Harcama Pasta Grafiği & Yüzdesel Dağılım -->
-      ${renderExpenseChartHTML({
-        drillDownCategory: state.drillDownCategory,
-        categoriesBreakdown,
-        subcategoriesBreakdown,
-        totalExpense: monthlyTotals.expense
-      })}
+          <!-- KPI Kartları (5 Kolon) -->
+          ${renderKPICards({
+            monthlyTotals,
+            cumulativeNetWorth,
+            creditCardDebt,
+            activeMonthName
+          })}
+        </div>
 
-      <!-- 3. İki Kolonlu Gelir ve Gider Tabloları -->
-      ${renderTransactionTables({
-        incomeTransactions,
-        expenseTransactions,
-        categories: state.categories,
-        activeMonthName
-      })}
+        <!-- 2. SEKME: ANALİZ & TABLOLAR -->
+        <div class="w-1/2 px-4 sm:px-6 lg:px-8 py-5 space-y-6">
+          <!-- Harcama Pasta Grafiği & Yüzdesel Dağılım -->
+          ${renderExpenseChartHTML({
+            drillDownCategory: state.drillDownCategory,
+            categoriesBreakdown,
+            subcategoriesBreakdown,
+            totalExpense: monthlyTotals.expense
+          })}
+
+          <!-- İki Kolonlu Gelir ve Gider Tabloları -->
+          ${renderTransactionTables({
+            incomeTransactions,
+            expenseTransactions,
+            categories: state.categories,
+            activeMonthName
+          })}
+        </div>
+
+      </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="border-t border-slate-800/80 py-4 text-center text-xs text-slate-500">
-      <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-        <span>Bütçe ve Net Varlık Takip Programı • Verileriniz tarayıcınızda güvendedir</span>
-        <span class="text-purple-400 font-medium">Toplam İşlem Sayısı: ${state.transactions.length}</span>
-      </div>
-    </footer>
+    <!-- Sabit Alt Gezinme Çubuğu (Bottom Navigation Bar) -->
+    <nav class="fixed bottom-0 inset-x-0 z-40 bg-slate-900/90 backdrop-blur-xl border-t border-slate-800/80 px-6 py-2.5 pb-[max(0.6rem,env(safe-area-inset-bottom))] flex items-center justify-around shadow-2xl">
+      <button id="nav-tab-summary" class="flex flex-col items-center gap-1 py-1 px-6 rounded-2xl transition ${isSummaryTab ? 'text-purple-400 font-bold bg-purple-500/10 shadow-sm' : 'text-slate-400 hover:text-slate-200'}">
+        <i data-lucide="layout-grid" class="w-5 h-5"></i>
+        <span class="text-[11px]">Özet</span>
+      </button>
+      <button id="nav-tab-analytics" class="flex flex-col items-center gap-1 py-1 px-6 rounded-2xl transition ${!isSummaryTab ? 'text-purple-400 font-bold bg-purple-500/10 shadow-sm' : 'text-slate-400 hover:text-slate-200'}">
+        <i data-lucide="pie-chart" class="w-5 h-5"></i>
+        <span class="text-[11px]">Analiz & Tablolar</span>
+      </button>
+    </nav>
   `;
 
   // Lucide İkonlarını Başlat
@@ -250,7 +280,7 @@ function renderModals() {
 }
 
 /**
- * Global Olay Dinleyicileri
+ * Global Olay Dinleyicileri (Dosya yükleme, Dokunmatik Kaydırma ve Dinamik Parıltı)
  */
 function setupGlobalEvents() {
   const fileInput = document.getElementById('backup-file-input');
@@ -284,12 +314,86 @@ function setupGlobalEvents() {
       reader.readAsText(file);
     });
   }
+
+  // Parmakla Sağa / Sola Kaydırarak Sekme Değiştirme (Touch Swipe)
+  let touchStartX = 0;
+  let touchStartY = 0;
+  window.addEventListener('touchstart', (e) => {
+    if (e.touches && e.touches.length > 0) {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchend', (e) => {
+    if (e.changedTouches && e.changedTouches.length > 0) {
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      const diffX = touchEndX - touchStartX;
+      const diffY = touchEndY - touchStartY;
+
+      // Herhangi bir modal açıkken sekme kaydırmasını engelle
+      const isModalOpen = state.modal.isOpen || state.isCategoryModalOpen || state.isSettingsModalOpen || state.isCCPaymentModalOpen || state.isCCInterestModalOpen;
+      if (!isModalOpen && Math.abs(diffX) > Math.abs(diffY) * 1.3 && Math.abs(diffX) > 40) {
+        if (diffX < 0 && state.activeTab === 'summary') {
+          // Sola kaydırıldı -> Analiz sekmesine geç
+          switchTab('analytics');
+        } else if (diffX > 0 && state.activeTab === 'analytics') {
+          // Sağa kaydırıldı -> Özet sekmesine geç
+          switchTab('summary');
+        }
+      }
+    }
+  }, { passive: true });
+
+  // Ekran Kaydırıldıkça Camsı Kartların Renklerinin Dinamik Parıldaması (Scroll-Driven Glow)
+  window.addEventListener('scroll', () => {
+    const scrollY = window.scrollY;
+    const scrollPercent = Math.min(scrollY / 300, 1);
+    const glowX = 100 - Math.sin(scrollY * 0.012) * 45;
+    const glowY = Math.cos(scrollY * 0.012) * 35;
+    const blur = 16 + scrollPercent * 8;
+
+    document.documentElement.style.setProperty('--scroll-glow-x', `${glowX}%`);
+    document.documentElement.style.setProperty('--scroll-glow-y', `${glowY}%`);
+    document.documentElement.style.setProperty('--scroll-blur', `${blur}px`);
+  }, { passive: true });
+}
+
+/**
+ * Sekmeler Arası Geçiş Yardımcısı
+ */
+function switchTab(tabName) {
+  state.activeTab = tabName;
+  const slider = document.getElementById('tabs-slider');
+  if (slider) {
+    slider.style.transform = tabName === 'summary' ? 'translateX(0%)' : 'translateX(-50%)';
+  }
+  const navSummary = document.getElementById('nav-tab-summary');
+  const navAnalytics = document.getElementById('nav-tab-analytics');
+  if (navSummary && navAnalytics) {
+    if (tabName === 'summary') {
+      navSummary.className = 'flex flex-col items-center gap-1 py-1 px-6 rounded-2xl transition text-purple-400 font-bold bg-purple-500/10 shadow-sm';
+      navAnalytics.className = 'flex flex-col items-center gap-1 py-1 px-6 rounded-2xl transition text-slate-400 hover:text-slate-200';
+    } else {
+      navSummary.className = 'flex flex-col items-center gap-1 py-1 px-6 rounded-2xl transition text-slate-400 hover:text-slate-200';
+      navAnalytics.className = 'flex flex-col items-center gap-1 py-1 px-6 rounded-2xl transition text-purple-400 font-bold bg-purple-500/10 shadow-sm';
+    }
+  }
 }
 
 /**
  * Sayfa İçi Dinleyicileri Bağlama
  */
 function attachAppListeners() {
+  // Sekme Butonları
+  document.getElementById('nav-tab-summary')?.addEventListener('click', () => switchTab('summary'));
+  document.getElementById('nav-tab-analytics')?.addEventListener('click', () => switchTab('analytics'));
+
+  // Hızlı İşlem Ekleme Butonları (Özet Sekmesinde)
+  document.getElementById('btn-quick-income')?.addEventListener('click', () => openTransactionModal('income'));
+  document.getElementById('btn-quick-expense')?.addEventListener('click', () => openTransactionModal('expense'));
+
   // Ay Değiştirme
   document.getElementById('btn-prev-month')?.addEventListener('click', () => changeMonth(-1));
   document.getElementById('btn-next-month')?.addEventListener('click', () => changeMonth(1));
@@ -301,17 +405,13 @@ function attachAppListeners() {
     renderApp();
   });
 
-  // Header Aksiyonları
-  document.getElementById('btn-add-income')?.addEventListener('click', () => openTransactionModal('income'));
-  document.getElementById('btn-add-expense')?.addEventListener('click', () => openTransactionModal('expense'));
-  document.getElementById('btn-manage-categories')?.addEventListener('click', () => {
-    state.isCategoryModalOpen = true;
-    renderModals();
-  });
+  // Küre Ayarlar Butonu
   document.getElementById('btn-open-settings')?.addEventListener('click', () => {
     state.isSettingsModalOpen = true;
     renderModals();
   });
+
+  // KPI Kartı Aksiyonları
   document.getElementById('btn-kpi-pay-cc')?.addEventListener('click', () => {
     state.isCCPaymentModalOpen = true;
     renderModals();
@@ -320,22 +420,8 @@ function attachAppListeners() {
     state.isCCInterestModalOpen = true;
     renderModals();
   });
-  document.getElementById('btn-export-backup')?.addEventListener('click', () => {
-    exportBackupJSON(state.transactions, state.categories, state.settings);
-  });
-  document.getElementById('btn-import-backup')?.addEventListener('click', () => {
-    document.getElementById('backup-file-input')?.click();
-  });
-  document.getElementById('btn-clear-all')?.addEventListener('click', () => {
-    if (confirm('Tüm gelir ve gider kayıtlarını sıfırlamak istediğinize emin misiniz? Bu işlem geri alınamaz.')) {
-      state.transactions = [];
-      saveTransactions([]);
-      state.drillDownCategory = null;
-      renderApp();
-    }
-  });
 
-  // Hızlı Ekleme Butonları
+  // Hızlı Ekleme Butonları (Tablo İçi)
   document.getElementById('btn-add-salary-quick')?.addEventListener('click', () => openTransactionModal('income', 'Maaş'));
   document.getElementById('btn-add-overtime-quick')?.addEventListener('click', () => openTransactionModal('income', 'Mesai'));
   document.getElementById('btn-add-other-income-quick')?.addEventListener('click', () => openTransactionModal('income', 'Diğer Gelir'));
@@ -475,6 +561,96 @@ function attachTransactionModalListeners() {
     if (subcatSelect) {
       subcatSelect.innerHTML = subs.map(s => `<option value="${s}">${s}</option>`).join('');
     }
+  });
+
+  // Modal İçi Hızlı Yeni Kategori Ekleme
+  const toggleCatBtn = document.getElementById('btn-toggle-inline-category');
+  const catBox = document.getElementById('inline-category-box');
+  const catInput = document.getElementById('inline-category-input');
+  const saveCatBtn = document.getElementById('btn-save-inline-category');
+  const cancelCatBtn = document.getElementById('btn-cancel-inline-category');
+
+  toggleCatBtn?.addEventListener('click', () => {
+    catBox?.classList.toggle('hidden');
+    if (!catBox?.classList.contains('hidden')) catInput?.focus();
+  });
+  cancelCatBtn?.addEventListener('click', () => {
+    catBox?.classList.add('hidden');
+    if (catInput) catInput.value = '';
+  });
+  saveCatBtn?.addEventListener('click', () => {
+    const newName = catInput?.value.trim();
+    if (!newName) return;
+    const transType = document.getElementById('trans-type')?.value || 'expense';
+
+    let cat = state.categories.find(c => c.name.toLowerCase() === newName.toLowerCase() && c.type === transType);
+    if (!cat) {
+      cat = {
+        name: newName,
+        type: transType,
+        color: transType === 'income' ? '#10B981' : '#8B5CF6',
+        subcategories: ['Genel']
+      };
+      state.categories.push(cat);
+      saveCategories(state.categories);
+    }
+
+    if (catSelect) {
+      const exists = Array.from(catSelect.options).some(o => o.value === cat.name);
+      if (!exists) {
+        const opt = document.createElement('option');
+        opt.value = cat.name;
+        opt.textContent = cat.name;
+        catSelect.appendChild(opt);
+      }
+      catSelect.value = cat.name;
+      const subs = cat.subcategories || ['Genel'];
+      if (subcatSelect) {
+        subcatSelect.innerHTML = subs.map(s => `<option value="${s}">${s}</option>`).join('');
+      }
+    }
+    catBox?.classList.add('hidden');
+    if (catInput) catInput.value = '';
+  });
+
+  // Modal İçi Hızlı Yeni Alt Başlık Ekleme
+  const toggleSubcatBtn = document.getElementById('btn-toggle-inline-subcategory');
+  const subcatBox = document.getElementById('inline-subcategory-box');
+  const subcatInput = document.getElementById('inline-subcategory-input');
+  const saveSubcatBtn = document.getElementById('btn-save-inline-subcategory');
+  const cancelSubcatBtn = document.getElementById('btn-cancel-inline-subcategory');
+
+  toggleSubcatBtn?.addEventListener('click', () => {
+    subcatBox?.classList.toggle('hidden');
+    if (!subcatBox?.classList.contains('hidden')) subcatInput?.focus();
+  });
+  cancelSubcatBtn?.addEventListener('click', () => {
+    subcatBox?.classList.add('hidden');
+    if (subcatInput) subcatInput.value = '';
+  });
+  saveSubcatBtn?.addEventListener('click', () => {
+    const newSubName = subcatInput?.value.trim();
+    if (!newSubName) return;
+    const currentCatName = catSelect?.value;
+    const cat = state.categories.find(c => c.name === currentCatName);
+    if (cat) {
+      if (!cat.subcategories.includes(newSubName)) {
+        cat.subcategories.push(newSubName);
+        saveCategories(state.categories);
+      }
+      if (subcatSelect) {
+        const exists = Array.from(subcatSelect.options).some(o => o.value === newSubName);
+        if (!exists) {
+          const opt = document.createElement('option');
+          opt.value = newSubName;
+          opt.textContent = newSubName;
+          subcatSelect.appendChild(opt);
+        }
+        subcatSelect.value = newSubName;
+      }
+    }
+    subcatBox?.classList.add('hidden');
+    if (subcatInput) subcatInput.value = '';
   });
 
   // Form Gönderimi (Ekle / Güncelle)
@@ -655,6 +831,23 @@ function attachSettingsModalListeners() {
     ensureFixedSalaryForMonth(state.activeMonth);
     closeSettingsModal();
     renderApp();
+  });
+
+  // Taşınan Veri & Yedekleme Butonları
+  document.getElementById('btn-export-backup')?.addEventListener('click', () => {
+    exportBackupJSON(state.transactions, state.categories, state.settings);
+  });
+  document.getElementById('btn-import-backup')?.addEventListener('click', () => {
+    document.getElementById('backup-file-input')?.click();
+  });
+  document.getElementById('btn-clear-all')?.addEventListener('click', () => {
+    if (confirm('Tüm gelir ve gider kayıtlarını sıfırlamak istediğinize emin misiniz? Bu işlem geri alınamaz.')) {
+      state.transactions = [];
+      saveTransactions([]);
+      state.drillDownCategory = null;
+      closeSettingsModal();
+      renderApp();
+    }
   });
 }
 

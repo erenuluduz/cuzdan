@@ -24,7 +24,7 @@ export function renderKPICards(props) {
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
       
       <!-- 1. Aylık Toplam Gelir -->
-      <div class="glass-panel kpi-gradient-income rounded-2xl p-4 sm:p-5 relative overflow-hidden transition duration-200 hover:border-emerald-500/30 flex flex-col justify-between">
+      <div class="glass-panel-card kpi-gradient-income rounded-2xl p-4 sm:p-5 relative overflow-hidden flex flex-col justify-between">
         <div>
           <div class="flex items-center justify-between">
             <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Aylık Gelir</span>
@@ -44,7 +44,7 @@ export function renderKPICards(props) {
       </div>
 
       <!-- 2. Aylık Toplam Gider -->
-      <div class="glass-panel kpi-gradient-expense rounded-2xl p-4 sm:p-5 relative overflow-hidden transition duration-200 hover:border-rose-500/30 flex flex-col justify-between">
+      <div class="glass-panel-card kpi-gradient-expense rounded-2xl p-4 sm:p-5 relative overflow-hidden flex flex-col justify-between">
         <div>
           <div class="flex items-center justify-between">
             <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Aylık Gider</span>
@@ -64,7 +64,7 @@ export function renderKPICards(props) {
       </div>
 
       <!-- 3. Kredi Kartı Güncel Borç Durumu -->
-      <div class="glass-panel kpi-gradient-debt rounded-2xl p-4 sm:p-5 relative overflow-hidden transition duration-200 hover:border-amber-500/40 flex flex-col justify-between">
+      <div class="glass-panel-card kpi-gradient-debt rounded-2xl p-4 sm:p-5 relative overflow-hidden flex flex-col justify-between">
         <div>
           <div class="flex items-center justify-between">
             <span class="text-[11px] font-semibold uppercase tracking-wider text-amber-300 flex items-center gap-1">
@@ -107,7 +107,7 @@ export function renderKPICards(props) {
       </div>
 
       <!-- 4. Aylık Net Tasarruf / Akış -->
-      <div class="glass-panel kpi-gradient-net rounded-2xl p-4 sm:p-5 relative overflow-hidden transition duration-200 hover:border-blue-500/30 flex flex-col justify-between">
+      <div class="glass-panel-card kpi-gradient-net rounded-2xl p-4 sm:p-5 relative overflow-hidden flex flex-col justify-between">
         <div>
           <div class="flex items-center justify-between">
             <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Aylık Net Fark</span>
@@ -130,7 +130,7 @@ export function renderKPICards(props) {
       </div>
 
       <!-- 5. Toplam Kümülatif Net Varlık -->
-      <div class="glass-panel kpi-gradient-wealth rounded-2xl p-4 sm:p-5 relative overflow-hidden transition duration-200 hover:border-purple-500/40 shadow-xl shadow-purple-950/20 flex flex-col justify-between">
+      <div class="glass-panel-card kpi-gradient-wealth rounded-2xl p-4 sm:p-5 relative overflow-hidden flex flex-col justify-between">
         <div>
           <div class="flex items-center justify-between">
             <span class="text-[11px] font-semibold uppercase tracking-wider text-purple-300">Toplam Net Varlık</span>

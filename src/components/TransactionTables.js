@@ -43,7 +43,7 @@ export function renderTransactionTables(props) {
             </div>
             <div>
               <h3 class="font-bold text-slate-100 text-sm">Aylık Gelir Tablosu</h3>
-              <p class="text-xs text-slate-400">${activeMonthName} • Toplam ${incomeTransactions.length} kayıt</p>
+              <p class="text-xs text-slate-400">${activeMonthName} Gelirleri</p>
             </div>
           </div>
           <div class="text-right">
@@ -143,7 +143,7 @@ export function renderTransactionTables(props) {
             </div>
             <div>
               <h3 class="font-bold text-slate-100 text-sm">Aylık Gider Tablosu</h3>
-              <p class="text-xs text-slate-400">${activeMonthName} • ${expenseTransactions.length} kayıt</p>
+              <p class="text-xs text-slate-400">${activeMonthName} Giderleri</p>
             </div>
           </div>
           <div class="text-right">
