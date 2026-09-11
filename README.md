@@ -32,10 +32,8 @@ Kişisel bütçenizi, gelirlerinizi, harcamalarınızı ve toplam net varlığı
 
 ---
 
-## 📖 Kullanım Rehberi (Tutorial) & Gelecek Özellikler (Roadmap)
+## 📖 Hızlı Başlangıç Rehberi (Quick Start)
 
-* Yeni başlayanlar için adım adım kullanım rehberi ve planlanan yeni özelliklerin detaylı listesi için [**ROADMAP.md**](./ROADMAP.md) dosyasını inceleyebilirsiniz.
-* **Hızlı Başlangıç:**
-  1. Sağ üstteki **Ayarlar (Çark)** ikonundan sabit maaş ve başlangıç kart borcunuzu kaydedin.
-  2. Sağ alttaki **`+` Küre Buton** ile gelir/gider ekleyin.
-  3. Ekranı sağa/sola kaydırarak analiz ve dağılım pasta grafiklerini keşfedin.
+1. Sağ üstteki **Ayarlar (Çark)** ikonundan sabit maaş ve başlangıç kart borcunuzu kaydedin.
+2. Sağ alttaki **`+` Küre Buton** ile gelir veya gider ekleyin.
+3. Ekranı parmağınızla sağa/sola kaydırarak analiz ve dağılım pasta grafiklerini keşfedin.
