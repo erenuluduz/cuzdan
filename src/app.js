@@ -336,58 +336,100 @@ function setupGlobalEvents() {
     });
   }
 
-  // Parmakla Sağa / Sola Kaydırarak Sekme Değiştirme (Touch Swipe)
+  // Parmakla Sağa / Sola Kaydırarak Canlı Sekme Takibi (Live Touch Drag & Spring Snap)
   let touchStartX = 0;
   let touchStartY = 0;
+  let isDraggingTab = false;
+  let initialTranslate = 0;
+
   window.addEventListener('touchstart', (e) => {
-    if (e.touches && e.touches.length > 0) {
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-    }
+    const isModalOpen = state.modal.isOpen || state.isCategoryModalOpen || state.isSettingsModalOpen || state.isCCPaymentModalOpen || state.isCCInterestModalOpen;
+    if (isModalOpen || !e.touches || e.touches.length !== 1) return;
+
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    isDraggingTab = false;
+    initialTranslate = state.activeTab === 'summary' ? 0 : -50;
   }, { passive: true });
 
-  window.addEventListener('touchend', (e) => {
-    if (e.changedTouches && e.changedTouches.length > 0) {
-      const touchEndX = e.changedTouches[0].clientX;
-      const touchEndY = e.changedTouches[0].clientY;
-      const diffX = touchEndX - touchStartX;
-      const diffY = touchEndY - touchStartY;
+  window.addEventListener('touchmove', (e) => {
+    if (!touchStartX || !e.touches || e.touches.length !== 1) return;
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const diffX = currentX - touchStartX;
+    const diffY = currentY - touchStartY;
 
-      // Herhangi bir modal açıkken sekme kaydırmasını engelle
-      const isModalOpen = state.modal.isOpen || state.isCategoryModalOpen || state.isSettingsModalOpen || state.isCCPaymentModalOpen || state.isCCInterestModalOpen;
-      if (!isModalOpen && Math.abs(diffX) > Math.abs(diffY) * 1.3 && Math.abs(diffX) > 40) {
-        if (diffX < 0 && state.activeTab === 'summary') {
-          // Sola kaydırıldı -> Analiz sekmesine geç
-          switchTab('analytics');
-        } else if (diffX > 0 && state.activeTab === 'analytics') {
-          // Sağa kaydırıldı -> Özet sekmesine geç
-          switchTab('summary');
-        }
+    if (!isDraggingTab) {
+      if (Math.abs(diffX) > Math.abs(diffY) * 1.2 && Math.abs(diffX) > 8) {
+        isDraggingTab = true;
+      } else if (Math.abs(diffY) > 8) {
+        return; // Dikey kaydırmaya izin ver
+      }
+    }
+
+    if (isDraggingTab) {
+      const slider = document.getElementById('tabs-slider');
+      if (slider) {
+        slider.style.transition = 'none'; // Parmakla anında milimetrik hareket et
+        const dragPercent = (diffX / window.innerWidth) * 50;
+        let targetPercent = initialTranslate + dragPercent;
+        // Uç sınırlarda elastik direnç
+        if (targetPercent > 0) targetPercent = targetPercent * 0.2;
+        if (targetPercent < -50) targetPercent = -50 + (targetPercent - (-50)) * 0.2;
+        slider.style.transform = `translateX(${targetPercent}%)`;
       }
     }
   }, { passive: true });
 
-  // Ekran Kaydırıldıkça Camsı Kartların Renklerinin Dinamik Parıldaması (Scroll-Driven Glow)
-  window.addEventListener('scroll', () => {
-    const scrollY = window.scrollY;
-    const scrollPercent = Math.min(scrollY / 300, 1);
-    const glowX = 100 - Math.sin(scrollY * 0.012) * 45;
-    const glowY = Math.cos(scrollY * 0.012) * 35;
-    const blur = 16 + scrollPercent * 8;
+  window.addEventListener('touchend', (e) => {
+    if (!isDraggingTab) return;
+    isDraggingTab = false;
 
-    document.documentElement.style.setProperty('--scroll-glow-x', `${glowX}%`);
-    document.documentElement.style.setProperty('--scroll-glow-y', `${glowY}%`);
-    document.documentElement.style.setProperty('--scroll-blur', `${blur}px`);
+    if (e.changedTouches && e.changedTouches.length > 0) {
+      const touchEndX = e.changedTouches[0].clientX;
+      const diffX = touchEndX - touchStartX;
+      const threshold = window.innerWidth * 0.16; // Ekranın %16'sı kadar çekilmiş olması yeterli
+
+      if (diffX < -threshold && state.activeTab === 'summary') {
+        switchTab('analytics');
+      } else if (diffX > threshold && state.activeTab === 'analytics') {
+        switchTab('summary');
+      } else {
+        // Eski konumuna yaylanarak geri dön
+        switchTab(state.activeTab);
+      }
+    }
+  }, { passive: true });
+
+  // Ekran Kaydırıldıkça Camsı Kartların Renklerinin Dinamik Parıldaması (rAF Throttled Scroll Glow)
+  let scrollTicking = false;
+  window.addEventListener('scroll', () => {
+    if (!scrollTicking) {
+      window.requestAnimationFrame(() => {
+        const scrollY = window.scrollY;
+        const scrollPercent = Math.min(scrollY / 300, 1);
+        const glowX = 100 - Math.sin(scrollY * 0.012) * 45;
+        const glowY = Math.cos(scrollY * 0.012) * 35;
+        const blur = 16 + scrollPercent * 8;
+
+        document.documentElement.style.setProperty('--scroll-glow-x', `${glowX}%`);
+        document.documentElement.style.setProperty('--scroll-glow-y', `${glowY}%`);
+        document.documentElement.style.setProperty('--scroll-blur', `${blur}px`);
+        scrollTicking = false;
+      });
+      scrollTicking = true;
+    }
   }, { passive: true });
 }
 
 /**
- * Sekmeler Arası Geçiş Yardımcısı
+ * Sekmeler Arası Geçiş Yardımcısı (Apple Spring Yaylanma Animasyonu)
  */
 function switchTab(tabName) {
   state.activeTab = tabName;
   const slider = document.getElementById('tabs-slider');
   if (slider) {
+    slider.style.transition = 'transform 420ms cubic-bezier(0.16, 1, 0.3, 1)';
     slider.style.transform = tabName === 'summary' ? 'translateX(0%)' : 'translateX(-50%)';
   }
   const navSummary = document.getElementById('nav-tab-summary');
@@ -572,32 +614,55 @@ function attachTransactionModalListeners() {
     renderModals();
   });
 
-  // Kategori değiştiğinde alt kategorileri dinamik güncelle
-  catSelect?.addEventListener('change', () => {
-    const selectedCatName = catSelect.value;
-    const catObj = state.categories.find(c => c.name === selectedCatName);
-    const subs = catObj?.subcategories || [];
+  // Kategori & Alt Başlık Dropdown Kontrolü
+  let lastValidCategory = catSelect?.value !== '__NEW_CATEGORY__' ? catSelect?.value : (state.categories.find(c => c.type === state.modal.type)?.name || '');
+  let lastValidSubcategory = subcatSelect?.value !== '__NEW_SUBCATEGORY__' ? subcatSelect?.value : 'Genel';
 
-    if (subcatSelect) {
-      subcatSelect.innerHTML = subs.map(s => `<option value="${s}">${s}</option>`).join('');
-    }
-  });
-
-  // Modal İçi Hızlı Yeni Kategori Ekleme
-  const toggleCatBtn = document.getElementById('btn-toggle-inline-category');
   const catBox = document.getElementById('inline-category-box');
   const catInput = document.getElementById('inline-category-input');
   const saveCatBtn = document.getElementById('btn-save-inline-category');
   const cancelCatBtn = document.getElementById('btn-cancel-inline-category');
 
-  toggleCatBtn?.addEventListener('click', () => {
-    catBox?.classList.toggle('hidden');
-    if (!catBox?.classList.contains('hidden')) catInput?.focus();
+  const subcatBox = document.getElementById('inline-subcategory-box');
+  const subcatInput = document.getElementById('inline-subcategory-input');
+  const saveSubcatBtn = document.getElementById('btn-save-inline-subcategory');
+  const cancelSubcatBtn = document.getElementById('btn-cancel-inline-subcategory');
+
+  // Kategori Seçimi Değiştiğinde
+  catSelect?.addEventListener('change', () => {
+    if (catSelect.value === '__NEW_CATEGORY__') {
+      catBox?.classList.remove('hidden');
+      if (catInput) {
+        catInput.value = '';
+        catInput.focus();
+      }
+      return;
+    }
+
+    lastValidCategory = catSelect.value;
+    catBox?.classList.add('hidden');
+
+    const selectedCatName = catSelect.value;
+    const catObj = state.categories.find(c => c.name === selectedCatName);
+    const subs = catObj?.subcategories || ['Genel'];
+
+    if (subcatSelect) {
+      subcatSelect.innerHTML = `
+        ${subs.map(s => `<option value="${s}">${s}</option>`).join('')}
+        <option disabled>──────────</option>
+        <option value="__NEW_SUBCATEGORY__" class="font-bold text-purple-400">➕ + Yeni Alt Başlık Ekle...</option>
+      `;
+      lastValidSubcategory = subs[0] || 'Genel';
+    }
   });
+
   cancelCatBtn?.addEventListener('click', () => {
     catBox?.classList.add('hidden');
-    if (catInput) catInput.value = '';
+    if (catSelect && lastValidCategory) {
+      catSelect.value = lastValidCategory;
+    }
   });
+
   saveCatBtn?.addEventListener('click', () => {
     const newName = catInput?.value.trim();
     if (!newName) return;
@@ -616,38 +681,50 @@ function attachTransactionModalListeners() {
     }
 
     if (catSelect) {
-      const exists = Array.from(catSelect.options).some(o => o.value === cat.name);
-      if (!exists) {
-        const opt = document.createElement('option');
-        opt.value = cat.name;
-        opt.textContent = cat.name;
-        catSelect.appendChild(opt);
-      }
+      const availableCategories = state.categories.filter(c => c.type === transType);
+      catSelect.innerHTML = `
+        ${availableCategories.map(c => `<option value="${c.name}">${c.name}</option>`).join('')}
+        <option disabled>──────────</option>
+        <option value="__NEW_CATEGORY__" class="font-bold text-purple-400">➕ + Yeni Kategori Ekle...</option>
+      `;
       catSelect.value = cat.name;
-      const subs = cat.subcategories || ['Genel'];
+      lastValidCategory = cat.name;
+
       if (subcatSelect) {
-        subcatSelect.innerHTML = subs.map(s => `<option value="${s}">${s}</option>`).join('');
+        subcatSelect.innerHTML = `
+          <option value="Genel">Genel</option>
+          <option disabled>──────────</option>
+          <option value="__NEW_SUBCATEGORY__" class="font-bold text-purple-400">➕ + Yeni Alt Başlık Ekle...</option>
+        `;
+        subcatSelect.value = 'Genel';
+        lastValidSubcategory = 'Genel';
       }
     }
     catBox?.classList.add('hidden');
     if (catInput) catInput.value = '';
   });
 
-  // Modal İçi Hızlı Yeni Alt Başlık Ekleme
-  const toggleSubcatBtn = document.getElementById('btn-toggle-inline-subcategory');
-  const subcatBox = document.getElementById('inline-subcategory-box');
-  const subcatInput = document.getElementById('inline-subcategory-input');
-  const saveSubcatBtn = document.getElementById('btn-save-inline-subcategory');
-  const cancelSubcatBtn = document.getElementById('btn-cancel-inline-subcategory');
-
-  toggleSubcatBtn?.addEventListener('click', () => {
-    subcatBox?.classList.toggle('hidden');
-    if (!subcatBox?.classList.contains('hidden')) subcatInput?.focus();
+  // Alt Başlık Seçimi Değiştiğinde
+  subcatSelect?.addEventListener('change', () => {
+    if (subcatSelect.value === '__NEW_SUBCATEGORY__') {
+      subcatBox?.classList.remove('hidden');
+      if (subcatInput) {
+        subcatInput.value = '';
+        subcatInput.focus();
+      }
+      return;
+    }
+    lastValidSubcategory = subcatSelect.value;
+    subcatBox?.classList.add('hidden');
   });
+
   cancelSubcatBtn?.addEventListener('click', () => {
     subcatBox?.classList.add('hidden');
-    if (subcatInput) subcatInput.value = '';
+    if (subcatSelect && lastValidSubcategory) {
+      subcatSelect.value = lastValidSubcategory;
+    }
   });
+
   saveSubcatBtn?.addEventListener('click', () => {
     const newSubName = subcatInput?.value.trim();
     if (!newSubName) return;
@@ -659,14 +736,13 @@ function attachTransactionModalListeners() {
         saveCategories(state.categories);
       }
       if (subcatSelect) {
-        const exists = Array.from(subcatSelect.options).some(o => o.value === newSubName);
-        if (!exists) {
-          const opt = document.createElement('option');
-          opt.value = newSubName;
-          opt.textContent = newSubName;
-          subcatSelect.appendChild(opt);
-        }
+        subcatSelect.innerHTML = `
+          ${cat.subcategories.map(s => `<option value="${s}">${s}</option>`).join('')}
+          <option disabled>──────────</option>
+          <option value="__NEW_SUBCATEGORY__" class="font-bold text-purple-400">➕ + Yeni Alt Başlık Ekle...</option>
+        `;
         subcatSelect.value = newSubName;
+        lastValidSubcategory = newSubName;
       }
     }
     subcatBox?.classList.add('hidden');
@@ -683,6 +759,11 @@ function attachTransactionModalListeners() {
     const date = document.getElementById('trans-date').value;
     const description = document.getElementById('trans-description').value.trim();
     const monthKey = getMonthKey(date);
+
+    if (category === '__NEW_CATEGORY__' || subcategory === '__NEW_SUBCATEGORY__') {
+      alert('Lütfen geçerli bir kategori veya alt başlık seçin ya da kutudan yeni bir isim ekleyin.');
+      return;
+    }
 
     // Giderler için ödeme yöntemi
     let paymentMethod = undefined;

@@ -122,6 +122,11 @@
 }
 
 /* Mobil Cihaz Güvenli Alanları (Safe Area) & Dokunmatik İyileştirmeleri */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
 body {
   overscroll-behavior-y: contain;
   -webkit-tap-highlight-color: transparent;
@@ -130,3 +135,13 @@ body {
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
 }
+
+/* Yumuşak Yaylanma ve Donanım Hızlandırmalı Sekme Kaydırma */
+#tabs-slider {
+  will-change: transform;
+  touch-action: pan-y pinch-zoom;
+  transition-property: transform;
+  transition-duration: 420ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+

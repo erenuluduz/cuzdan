@@ -139,13 +139,7 @@ export function renderTransactionModal(props) {
           <!-- Kategori & Alt Kategori Seçimi -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <div class="flex items-center justify-between mb-1.5">
-                <label class="block text-xs font-semibold text-slate-300">Ana Kategori *</label>
-                <button type="button" id="btn-toggle-inline-category" class="text-[11px] text-purple-400 hover:text-purple-300 font-semibold transition flex items-center gap-1">
-                  <i data-lucide="plus" class="w-3 h-3"></i>
-                  <span>Yeni Kategori</span>
-                </button>
-              </div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Ana Kategori *</label>
               <select 
                 id="trans-category" 
                 required
@@ -156,6 +150,8 @@ export function renderTransactionModal(props) {
                     ${cat.name}
                   </option>
                 `).join('')}
+                <option disabled>──────────</option>
+                <option value="__NEW_CATEGORY__" class="font-bold text-purple-400">➕ + Yeni Kategori Ekle...</option>
               </select>
 
               <!-- Inline Yeni Kategori Ekleme Kutusu -->
@@ -163,7 +159,7 @@ export function renderTransactionModal(props) {
                 <input 
                   type="text" 
                   id="inline-category-input" 
-                  placeholder="Yeni kategori adı..." 
+                  placeholder="Yeni kategori adı yazın..." 
                   class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-400"
                 >
                 <div class="flex items-center justify-end gap-1.5">
@@ -178,13 +174,7 @@ export function renderTransactionModal(props) {
             </div>
 
             <div>
-              <div class="flex items-center justify-between mb-1.5">
-                <label class="block text-xs font-semibold text-slate-300">Alt Başlık *</label>
-                <button type="button" id="btn-toggle-inline-subcategory" class="text-[11px] text-purple-400 hover:text-purple-300 font-semibold transition flex items-center gap-1">
-                  <i data-lucide="plus" class="w-3 h-3"></i>
-                  <span>Yeni Alt Başlık</span>
-                </button>
-              </div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Alt Başlık *</label>
               <select 
                 id="trans-subcategory" 
                 required
@@ -195,6 +185,8 @@ export function renderTransactionModal(props) {
                     ${sub}
                   </option>
                 `).join('')}
+                <option disabled>──────────</option>
+                <option value="__NEW_SUBCATEGORY__" class="font-bold text-purple-400">➕ + Yeni Alt Başlık Ekle...</option>
               </select>
 
               <!-- Inline Yeni Alt Başlık Ekleme Kutusu -->
@@ -202,7 +194,7 @@ export function renderTransactionModal(props) {
                 <input 
                   type="text" 
                   id="inline-subcategory-input" 
-                  placeholder="Yeni alt başlık adı..." 
+                  placeholder="Yeni alt başlık adı yazın..." 
                   class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-400"
                 >
                 <div class="flex items-center justify-end gap-1.5">
