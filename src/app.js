@@ -28,6 +28,7 @@ import {
   parseAndValidateBackup
 } from './utils/storage.js';
 import { TouchDirectionTracker } from './utils/touchTracker.js';
+import { calculateSliderHeight } from './utils/sliderHeight.js';
 
 import { renderHeader } from './components/Header.js';
 import { renderKPICards } from './components/KPICards.js';
@@ -178,10 +179,10 @@ function renderApp() {
 
     <main class="max-w-7xl mx-auto pb-24 flex-1 w-full overflow-hidden">
       <!-- İki Sekmeli Kaydırılabilir Alan (Tabs Slider) -->
-      <div id="tabs-slider" class="flex transition-transform duration-300 ease-out w-[200%]" style="transform: translateX(${isSummaryTab ? '0%' : '-50%'});">
+      <div id="tabs-slider" class="flex items-start transition-transform duration-300 ease-out w-[200%] overflow-hidden" style="transform: translateX(${isSummaryTab ? '0%' : '-50%'});">
         
         <!-- 1. SEKME: ÖZET -->
-        <div class="w-1/2 px-4 sm:px-6 lg:px-8 py-4 space-y-6">
+        <div id="tab-pane-summary" class="w-1/2 px-4 sm:px-6 lg:px-8 py-4 space-y-6">
           <!-- KPI Kartları (5 Kolon) -->
           ${renderKPICards({
             monthlyTotals,
@@ -192,7 +193,7 @@ function renderApp() {
         </div>
 
         <!-- 2. SEKME: ANALİZ & TABLOLAR -->
-        <div class="w-1/2 px-4 sm:px-6 lg:px-8 py-4 space-y-6">
+        <div id="tab-pane-analytics" class="w-1/2 px-4 sm:px-6 lg:px-8 py-4 space-y-6">
           <!-- Harcama Pasta Grafiği & Yüzdesel Dağılım -->
           ${renderExpenseChartHTML({
             drillDownCategory: state.drillDownCategory,
@@ -252,6 +253,30 @@ function renderApp() {
 
   // Etkinlik Dinleyicilerini Bağla
   attachAppListeners();
+
+  // Sekme Yüksekliğini Aktif Sekmeye Göre Dinamik Olarak Güncelle
+  window.requestAnimationFrame(() => {
+    updateSliderHeight();
+  });
+}
+
+/**
+ * Sekme Kapsayıcısının Yüksekliğini Aktif Sekmeye Göre Dinamik Olarak Günceller
+ * (Özet sekmesinde altta gereksiz devasa boşluk kalmasını engeller)
+ */
+function updateSliderHeight(tabName = state.activeTab) {
+  const slider = document.getElementById('tabs-slider');
+  const summaryPane = document.getElementById('tab-pane-summary');
+  const analyticsPane = document.getElementById('tab-pane-analytics');
+  if (!slider || !summaryPane || !analyticsPane) return;
+
+  const sHeight = Math.ceil(summaryPane.offsetHeight || summaryPane.getBoundingClientRect().height);
+  const aHeight = Math.ceil(analyticsPane.offsetHeight || analyticsPane.getBoundingClientRect().height);
+  const targetHeight = calculateSliderHeight(tabName, sHeight, aHeight);
+
+  if (targetHeight > 0) {
+    slider.style.height = `${targetHeight}px`;
+  }
 }
 
 /**
@@ -366,6 +391,15 @@ function setupGlobalEvents() {
       const slider = document.getElementById('tabs-slider');
       if (slider) {
         slider.style.transition = 'none'; // Parmakla anında milimetrik hareket et
+
+        // Sürükleme anında iki sekmenin içeriği de kırpılmasın diye yüksekliği genişlet
+        const summaryPane = document.getElementById('tab-pane-summary');
+        const analyticsPane = document.getElementById('tab-pane-analytics');
+        if (summaryPane && analyticsPane) {
+          const maxDragH = calculateSliderHeight('dragging', summaryPane.offsetHeight, analyticsPane.offsetHeight);
+          if (maxDragH > 0) slider.style.height = `${maxDragH}px`;
+        }
+
         const dragPercent = (moveResult.diffX / window.innerWidth) * 50;
         let targetPercent = initialTranslate + dragPercent;
         // Uç sınırlarda elastik direnç
@@ -396,12 +430,22 @@ function setupGlobalEvents() {
         // Eski konumuna yaylanarak geri dön
         switchTab(state.activeTab);
       }
+    } else {
+      updateSliderHeight();
     }
     touchTracker.reset();
   };
 
   window.addEventListener('touchend', handleTouchEndOrCancel, { passive: true });
   window.addEventListener('touchcancel', handleTouchEndOrCancel, { passive: true });
+
+  // Ekran Yeniden Boyutlandırıldığında Sekme Yüksekliğini Güncelle
+  window.addEventListener('resize', () => {
+    updateSliderHeight();
+  });
+  window.addEventListener('orientationchange', () => {
+    setTimeout(updateSliderHeight, 150);
+  });
 
   // Ekran Kaydırıldıkça Camsı Kartların Renklerinin Dinamik Parıldaması (rAF Throttled Scroll Glow)
   let scrollTicking = false;
@@ -425,14 +469,20 @@ function setupGlobalEvents() {
 }
 
 /**
- * Sekmeler Arası Geçiş Yardımcısı (Apple Spring Yaylanma Animasyonu)
+ * Sekmeler Arası Geçiş Yardımcısı (Apple Spring Yaylanma Animasyonu & Dinamik Yükseklik)
  */
 function switchTab(tabName) {
   state.activeTab = tabName;
   const slider = document.getElementById('tabs-slider');
   if (slider) {
-    slider.style.transition = 'transform 420ms cubic-bezier(0.16, 1, 0.3, 1)';
+    slider.style.transition = 'transform 420ms cubic-bezier(0.16, 1, 0.3, 1), height 420ms cubic-bezier(0.16, 1, 0.3, 1)';
     slider.style.transform = tabName === 'summary' ? 'translateX(0%)' : 'translateX(-50%)';
+    updateSliderHeight(tabName);
+  }
+
+  // Özet sekmesine dönüldüyse ve sayfa aşağıda kaldıysa tepeye yumuşak kaydır
+  if (tabName === 'summary' && window.scrollY > 80) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   const navSummary = document.getElementById('nav-tab-summary');
   const navAnalytics = document.getElementById('nav-tab-analytics');

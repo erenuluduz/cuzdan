@@ -10,10 +10,12 @@
   <script type="module">
     import { runTests as runCalcTests } from './calculations.test.js';
     import { runTests as runTouchTests } from './touchTracker.test.js';
+    import { runTests as runHeightTests } from './sliderHeight.test.js';
     try {
       const calcResults = runCalcTests();
       const touchResults = runTouchTests();
-      const allResults = [...calcResults, ...touchResults];
+      const heightResults = runHeightTests();
+      const allResults = [...calcResults, ...touchResults, ...heightResults];
       document.getElementById('output').innerHTML = `
         <div id="status">ALL_TESTS_PASSED (${allResults.length} tests)</div>
         <ul>${allResults.map(r => `<li>${r.name}: ${r.status}</li>`).join('')}</ul>

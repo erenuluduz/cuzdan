@@ -138,9 +138,9 @@ body {
 
 /* Yumuşak Yaylanma ve Donanım Hızlandırmalı Sekme Kaydırma */
 #tabs-slider {
-  will-change: transform;
+  will-change: transform, height;
   touch-action: pan-y pinch-zoom;
-  transition-property: transform;
+  transition-property: transform, height;
   transition-duration: 420ms;
   transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
