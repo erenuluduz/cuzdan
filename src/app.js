@@ -27,6 +27,7 @@ import {
   exportBackupJSON,
   parseAndValidateBackup
 } from './utils/storage.js';
+import { TouchDirectionTracker } from './utils/touchTracker.js';
 
 import { renderHeader } from './components/Header.js';
 import { renderKPICards } from './components/KPICards.js';
@@ -336,58 +337,55 @@ function setupGlobalEvents() {
     });
   }
 
-  // Parmakla Sağa / Sola Kaydırarak Canlı Sekme Takibi (Live Touch Drag & Spring Snap)
-  let touchStartX = 0;
-  let touchStartY = 0;
-  let isDraggingTab = false;
+  // Parmakla Sağa / Sola Kaydırarak Canlı Sekme Takibi & Eksen Kilitleme (Directional Lock)
+  const touchTracker = new TouchDirectionTracker(8);
   let initialTranslate = 0;
 
   window.addEventListener('touchstart', (e) => {
     const isModalOpen = state.modal.isOpen || state.isCategoryModalOpen || state.isSettingsModalOpen || state.isCCPaymentModalOpen || state.isCCInterestModalOpen;
-    if (isModalOpen || !e.touches || e.touches.length !== 1) return;
+    if (isModalOpen || !e.touches || e.touches.length !== 1) {
+      touchTracker.reset();
+      return;
+    }
 
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-    isDraggingTab = false;
+    touchTracker.start(e.touches[0].clientX, e.touches[0].clientY);
     initialTranslate = state.activeTab === 'summary' ? 0 : -50;
   }, { passive: true });
 
   window.addEventListener('touchmove', (e) => {
-    if (!touchStartX || !e.touches || e.touches.length !== 1) return;
-    const currentX = e.touches[0].clientX;
-    const currentY = e.touches[0].clientY;
-    const diffX = currentX - touchStartX;
-    const diffY = currentY - touchStartY;
+    if (!e.touches || e.touches.length !== 1) return;
+    const moveResult = touchTracker.move(e.touches[0].clientX, e.touches[0].clientY);
+    if (!moveResult) return;
 
-    if (!isDraggingTab) {
-      if (Math.abs(diffX) > Math.abs(diffY) * 1.2 && Math.abs(diffX) > 8) {
-        isDraggingTab = true;
-      } else if (Math.abs(diffY) > 8) {
-        return; // Dikey kaydırmaya izin ver
+    if (moveResult.direction === 'horizontal') {
+      // Yön yatay kilitlendiğinde dikey sayfa kaydırmasını (çapraz hareketi) engelle
+      if (e.cancelable) {
+        e.preventDefault();
       }
-    }
 
-    if (isDraggingTab) {
       const slider = document.getElementById('tabs-slider');
       if (slider) {
         slider.style.transition = 'none'; // Parmakla anında milimetrik hareket et
-        const dragPercent = (diffX / window.innerWidth) * 50;
+        const dragPercent = (moveResult.diffX / window.innerWidth) * 50;
         let targetPercent = initialTranslate + dragPercent;
         // Uç sınırlarda elastik direnç
         if (targetPercent > 0) targetPercent = targetPercent * 0.2;
         if (targetPercent < -50) targetPercent = -50 + (targetPercent - (-50)) * 0.2;
         slider.style.transform = `translateX(${targetPercent}%)`;
       }
+    } else if (moveResult.direction === 'vertical') {
+      // Yön dikey kilitlendiğinde yatay sekme kaydırmasını engelle, doğal dikey kaydırmaya bırak
+      return;
     }
-  }, { passive: true });
+  }, { passive: false });
 
-  window.addEventListener('touchend', (e) => {
-    if (!isDraggingTab) return;
-    isDraggingTab = false;
+  const handleTouchEndOrCancel = (e) => {
+    const lockedDirection = touchTracker.getDirection();
+    const startX = touchTracker.startX;
 
-    if (e.changedTouches && e.changedTouches.length > 0) {
+    if (lockedDirection === 'horizontal' && startX !== null && e.changedTouches && e.changedTouches.length > 0) {
       const touchEndX = e.changedTouches[0].clientX;
-      const diffX = touchEndX - touchStartX;
+      const diffX = touchEndX - startX;
       const threshold = window.innerWidth * 0.16; // Ekranın %16'sı kadar çekilmiş olması yeterli
 
       if (diffX < -threshold && state.activeTab === 'summary') {
@@ -399,7 +397,11 @@ function setupGlobalEvents() {
         switchTab(state.activeTab);
       }
     }
-  }, { passive: true });
+    touchTracker.reset();
+  };
+
+  window.addEventListener('touchend', handleTouchEndOrCancel, { passive: true });
+  window.addEventListener('touchcancel', handleTouchEndOrCancel, { passive: true });
 
   // Ekran Kaydırıldıkça Camsı Kartların Renklerinin Dinamik Parıldaması (rAF Throttled Scroll Glow)
   let scrollTicking = false;

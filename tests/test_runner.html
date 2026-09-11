@@ -8,14 +8,17 @@
   <h1>Unit Test Runner</h1>
   <div id="output">Running tests...</div>
   <script type="module">
-    import { runTests } from './calculations.test.js';
+    import { runTests as runCalcTests } from './calculations.test.js';
+    import { runTests as runTouchTests } from './touchTracker.test.js';
     try {
-      const results = runTests();
+      const calcResults = runCalcTests();
+      const touchResults = runTouchTests();
+      const allResults = [...calcResults, ...touchResults];
       document.getElementById('output').innerHTML = `
-        <div id="status">ALL_TESTS_PASSED</div>
-        <ul>${results.map(r => `<li>${r.name}: ${r.status}</li>`).join('')}</ul>
+        <div id="status">ALL_TESTS_PASSED (${allResults.length} tests)</div>
+        <ul>${allResults.map(r => `<li>${r.name}: ${r.status}</li>`).join('')}</ul>
       `;
-      console.log('ALL_TESTS_PASSED', results);
+      console.log('ALL_TESTS_PASSED', allResults);
     } catch (err) {
       document.getElementById('output').innerHTML = `<div id="status">TEST_FAILED</div><pre>${err.stack}</pre>`;
       console.error('TEST_FAILED', err);
