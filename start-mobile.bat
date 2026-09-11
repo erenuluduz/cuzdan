@@ -15,5 +15,5 @@ echo iPhone'unuzdan Expo Go uygulamasini acip
 echo ekrana gelecek QR kodu kameranizla tarayiniz.
 echo.
 cd mobile
-npx.cmd expo start --tunnel=false
+npx.cmd expo start --lan
 pause
